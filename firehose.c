@@ -66,8 +66,9 @@ response_t _response(parse_xml_reader_func func)
     response_t response;
      
     while(timeout>0){
-        status = read_response(ptr, MAX_RESP_LENGTH, &r);
-        if(r>0)
+        r = 0;
+        status = read_response(ptr, MAX_RESP_LENGTH-(ptr-respbuf), &r);
+        if(status>=0 && r>0)
             ptr += r;
             xmlInitReader(&reader, respbuf, ptr - respbuf);
             response = func(reader);
@@ -157,9 +158,10 @@ response_t transmit_response()
     response_t response;
     
     while(timeout>0){
-        status = read_response(ptr, MAX_RESP_LENGTH, &r);
+        r = 0;
+        status = read_response(ptr, MAX_RESP_LENGTH-(ptr-respbuf), &r);
         //LOG("%s", respbuf);
-        if(r>0){
+        if(status>=0 && r>0){
             ptr += r;
             xmlInitReader(&reader, respbuf, ptr - respbuf);
             response = transmit_response_xml_reader(reader);

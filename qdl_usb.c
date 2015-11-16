@@ -31,11 +31,9 @@ int write_tx(void *buf, int len, int *act)
 {
     int ret;
     int nil;
-    int *count;
-    if (!act)
+    int *count = act;
+    if (!count)
         count = &nil;
-    else
-        count = act;
 
     do{
         ret  = libusb_bulk_transfer(handle, EP_OUT, buf, len, count, 1000*5);
@@ -51,12 +49,10 @@ int write_tx(void *buf, int len, int *act)
 int read_rx_timeout(void *buf, int length, int *act, int timeout)
 {
     int ret;
-    int nil;
-    int *count;
-    if (!act)
+    int nil = -1;
+    int *count = act;
+    if (!count)
         count = &nil;
-    else
-        count = act;
 
     do{
         ret = libusb_bulk_transfer(handle, EP_IN, buf, length, count, timeout);
