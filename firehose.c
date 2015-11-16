@@ -24,6 +24,7 @@ char *respbuf_ref()
 
 static int clear_rubbish()
 {
+    bzero(rubbish, sizeof(rubbish));
     return read_rx_timeout(rubbish, sizeof(rubbish), NULL, 500); //500ms timeout
 }
 
@@ -451,6 +452,7 @@ response_t transmit_file(int fd,
 
     status = send_data(packet, 0, &w);//flush function?
     sent = w = 0;
+    clear_rubbish();
     while((r=read(fd, packet, payload))>0){
         status = send_data(packet, ((r + sector_size - 1)/sector_size*sector_size), &w);
         if((status < 0) || (w != (r + sector_size - 1)/sector_size*sector_size)){
@@ -462,7 +464,6 @@ response_t transmit_file(int fd,
         printf("\r %zu / %zu    ", sent, sector_numbers*sector_size); fflush (stdout);
     }
     status = send_data(packet, 0, &w);//flush function?
-    info("nil %d", w);
     free(packet);
     packet = NULL;
     response = transmit_file_response();

@@ -31,29 +31,37 @@ int write_tx(void *buf, int len, int *act)
 {
     int ret;
     int nil;
+    int max_retry = 3;
     int *count = act;
     if (!count)
         count = &nil;
+    *count = 0;
 
     do{
-        ret  = libusb_bulk_transfer(handle, EP_OUT, buf, len, count, 1000*5);
-        if (ret == LIBUSB_ERROR_PIPE && *count== 0) {
-            libusb_clear_halt(handle, EP_OUT);
+        ret  = libusb_bulk_transfer(handle, EP_OUT, buf, len, count, 5000);
+        if (ret == LIBUSB_ERROR_TIMEOUT && *count == 0){
+            usleep(500);
             continue;
         }else{
-            return ret;
+            if (ret == LIBUSB_ERROR_PIPE && *count== 0) {
+                libusb_clear_halt(handle, EP_OUT);
+                continue;
+            }else{
+                return ret;
+            }
         }
-    }while(1);
+    }while(max_retry--);
 }
 
 int read_rx_timeout(void *buf, int length, int *act, int timeout)
 {
     int ret;
-    int nil = -1;
+    int nil;
+    int max_retry = 3;
     int *count = act;
     if (!count)
         count = &nil;
-
+    *count = 0;
     do{
         ret = libusb_bulk_transfer(handle, EP_IN, buf, length, count, timeout);
         if (ret == LIBUSB_ERROR_PIPE && *count == 0) {
@@ -62,7 +70,7 @@ int read_rx_timeout(void *buf, int length, int *act, int timeout)
         }else{
             return ret;
         }
-    }while(1);
+    }while(max_retry--);
 }
 
 int read_rx(void *buf, int length, int *act)
