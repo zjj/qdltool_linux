@@ -468,7 +468,7 @@ response_t transmit_file(int fd,
     packet = NULL;
     response = transmit_file_response();
     if (response == ACK)
-        info("transmit succeeded");
+        info("  succeeded");
     else
         info("transmit failed");
     return response;
@@ -499,4 +499,33 @@ response_t power_action(char *act)
     sprintf(cmd, format, act);
     send_command(cmd, strlen(cmd));
     return power_response();
+}
+
+void parse_patch_xml(char *xml,
+                     size_t length,
+                     char *what,
+                     char *filename)
+{
+    char buf[4096] = {0};
+    char tempbuf[128] = {0};
+    memcpy(buf, xml, length);
+    xml_reader_t reader;
+    xml_token_t token;
+    xmlInitReader(&reader, buf, length);
+
+    while ((token = xmlGetToken(&reader)) != XML_TOKEN_NONE) {
+        if (token == XML_TOKEN_ATTRIBUTE) {
+            if (xmlIsAttribute(&reader, "filename")){
+                xmlGetAttributeValue(&reader, tempbuf, sizeof(tempbuf));
+                strncpy(filename, tempbuf, strlen(tempbuf));
+                bzero(tempbuf, sizeof(tempbuf));
+            }
+
+            if (xmlIsAttribute(&reader, "what")){
+                xmlGetAttributeValue(&reader, tempbuf, sizeof(tempbuf));
+                strncpy(what, tempbuf, strlen(tempbuf));
+                bzero(tempbuf, sizeof(tempbuf));
+            }
+        }
+    }
 }
