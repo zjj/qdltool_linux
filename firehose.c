@@ -69,13 +69,13 @@ response_t _response(parse_xml_reader_func func)
     while(timeout>0){
         r = 0;
         status = read_response(ptr, MAX_RESP_LENGTH-(ptr-respbuf), &r);
-        if(status>=0 && r>0)
+        if(status>=0 && r>0){
             ptr += r;
             xmlInitReader(&reader, respbuf, ptr - respbuf);
             response = func(reader);
             if(response != NIL)
                 return response;
-        else{
+        }else{
             timeout--;
             sleep(1);
         }
@@ -239,10 +239,12 @@ response_t firehose_configure(size_t *payload)
 
     if (!MaxPayloadSizeToTargetInBytesSupported[0]){
         LOG("Get MaxPayloadSizeToTargetInBytesSupported failed");
-    }else{
+    }/*
+    else{
         LOG("Got MaxPayloadSizeToTargetInBytesSupported %s",
             MaxPayloadSizeToTargetInBytesSupported);
     }
+    */
 
     bzero(ack, sizeof(ack));
     bzero(cmd, sizeof(cmd));
@@ -278,7 +280,7 @@ response_t firehose_configure(size_t *payload)
             }
         }
     }
-    return NAK;
+    return NIL;
 }
 
 response_t program_response_xml_reader(xml_reader_t reader)
@@ -306,7 +308,7 @@ response_t program_response_xml_reader(xml_reader_t reader)
             }
         }
     }
-    return NAK;
+    return NIL;
 }
 
 void parse_program_xml(char *xml,
