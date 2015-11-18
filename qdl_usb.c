@@ -31,7 +31,7 @@ int write_tx(void *buf, int len, int *act)
 {
     int ret;
     int nil;
-    int max_retry = 3;
+    int max_retry = 5;
     int *count = act;
     if (!count)
         count = &nil;
@@ -39,11 +39,11 @@ int write_tx(void *buf, int len, int *act)
 
     do{
         ret  = libusb_bulk_transfer(handle, EP_OUT, buf, len, count, 5000);
-        if (ret == LIBUSB_ERROR_TIMEOUT && *count == 0){
+        if (ret == LIBUSB_ERROR_TIMEOUT){   // && *count == 0){
             usleep(500);
             continue;
         }else{
-            if (ret == LIBUSB_ERROR_PIPE && *count== 0) {
+            if (ret == LIBUSB_ERROR_PIPE){  // && *count== 0) {
                 libusb_clear_halt(handle, EP_OUT);
                 continue;
             }else{
@@ -64,18 +64,23 @@ int read_rx_timeout(void *buf, int length, int *act, int timeout)
     *count = 0;
     do{
         ret = libusb_bulk_transfer(handle, EP_IN, buf, length, count, timeout);
-        if (ret == LIBUSB_ERROR_PIPE && *count == 0) {
-            libusb_clear_halt(handle, EP_IN);
+        if (ret == LIBUSB_ERROR_TIMEOUT){
+            usleep(500);
             continue;
         }else{
-            return ret;
+            if (ret == LIBUSB_ERROR_PIPE){  // && *count == 0) {
+                libusb_clear_halt(handle, EP_IN);
+                continue;
+            }else{
+                return ret;
+            }
         }
     }while(max_retry--);
 }
 
 int read_rx(void *buf, int length, int *act)
 {
-    return read_rx_timeout(buf, length, act, 0);
+    return read_rx_timeout(buf, length, act, 1000*10); //10s timeout default
 }
 
 void qdl_usb_close()
