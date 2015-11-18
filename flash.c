@@ -113,7 +113,7 @@ int main(int argc, char **argv)
             char *zeroout = NULL;
             u8 physical_partition_number = 0;
 
-            zeroout = strcasestr(line, "<zeroout");
+            zeroout = strcasestr(line, "<zeroout"); //fixme
             if (!zeroout){
                 free(line);
                 line = NULL;
@@ -163,7 +163,7 @@ int main(int argc, char **argv)
         u8 physical_partition_number;
 
         char *program = NULL;
-        program = strcasestr(line, "<program");
+        program = strcasestr(line, "<program"); //fixme
         if (!program){
             free(line);
             line = NULL;
@@ -224,7 +224,7 @@ int main(int argc, char **argv)
             char what[2048] = {0};
             char filename[128] = {0};
 
-            patch_tag = strcasestr(line, "<patch");
+            patch_tag = strcasestr(line, "<patch"); //fixme
             if (!patch_tag){
                 free(line);
                 line = NULL;
