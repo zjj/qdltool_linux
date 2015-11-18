@@ -150,8 +150,14 @@ int dowload_firehose_image(char *image_path)
     read(fd, image_data, file_stat.st_size);
     close(fd);
 
-    sahara_handle_packet_hello();       //rev hello
-    sahara_send_packet_hello_resp();    //send hello resp packet
+    status = sahara_handle_packet_hello();       //rev hello
+    if (status < 0){
+        xerror("sahara_handle_packet_hello with status %d", status);
+    }
+    status = sahara_send_packet_hello_resp();    //send hello resp packet
+    if (status < 0){
+        xerror("sahara_send_packet_hello_resp with status %d", status);
+    }
 
     while(1){
         int len = 0;
