@@ -452,14 +452,12 @@ response_t transmit_file(int fd,
     if (response == NIL)
         xerror("no ACK or NAK found in response");
 
-    status = send_data(packet, 0, &w);//flush function?
     sent = w = 0;
     clear_rubbish();
     while((r=read(fd, packet, payload))>0){
         status = send_data(packet, ((r + sector_size - 1)/sector_size*sector_size), &w);
         if((status < 0) || (w != (r + sector_size - 1)/sector_size*sector_size)){
             xerror("failed, status: %d  w: %d", status, w);
-            return NAK;
         }
         memset(packet, 0, payload);
         sent += w;
@@ -472,7 +470,7 @@ response_t transmit_file(int fd,
     if (response == ACK)
         info("  succeeded");
     else
-        info("transmit failed");
+        info("failed");
     return response;
 }
 

@@ -36,10 +36,10 @@ int write_tx(void *buf, int len, int *act)
     if (!count)
         count = &nil;
     *count = 0;
-
+/*
     ret = libusb_bulk_transfer(handle, EP_OUT, buf, len, count, 0);
     return ret;
-/*
+*/
     do{
         ret  = libusb_bulk_transfer(handle, EP_OUT, buf, len, count, 5000);
         if (ret == LIBUSB_ERROR_TIMEOUT){   // && *count == 0){
@@ -54,7 +54,6 @@ int write_tx(void *buf, int len, int *act)
             }
         }
     }while(max_retry--);
-*/
 }
 
 int read_rx_timeout(void *buf, int length, int *act, int timeout)
