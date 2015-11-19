@@ -462,10 +462,11 @@ response_t transmit_file(int fd,
         memset(packet, 0, payload);
         sent += w;
         printf("\r %zu / %zu    ", sent, sector_numbers*sector_size); fflush (stdout);
+
     }
-    status = send_data(packet, 0, &w);//flush function?
     free(packet);
     packet = NULL;
+    send_data(packet, 0, NULL);//flush function?
     response = transmit_file_response();
     if (response == ACK)
         info("  succeeded");
