@@ -424,7 +424,6 @@ void generate_program_xml(char xml[4096],
 }
 
 response_t transmit_file(int fd,
-                   size_t payload,
                    size_t sector_numbers,
                    size_t sector_size,
                    char *start_sector,
@@ -434,6 +433,7 @@ response_t transmit_file(int fd,
     int r, w, status;
     response_t response;
     char program_xml[4096] = {0};
+    int payload = 16*1024; //16K
     char *packet = (char *)malloc(payload);
     bzero(packet, payload); 
     clear_rubbish();

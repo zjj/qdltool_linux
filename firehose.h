@@ -28,7 +28,6 @@ extern int send_program_xml(char *xml, int length);
 extern int send_rawdata(char *buf, int size);
 extern response_t firehose_configure(size_t *payload);
 extern response_t transmit_file(int fd,
-                                size_t payload,
                                 size_t sector_number,
                                 size_t sector_size,
                                 char *start_sector,
