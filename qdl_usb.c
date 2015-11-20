@@ -66,7 +66,7 @@ int read_rx_timeout(void *buf, int length, int *act, int timeout)
     if (!count)
         count = &nil;
     *count = 0;
-    return libusb_bulk_transfer(handle, EP_IN, buf, len, count, timeout);
+    return libusb_bulk_transfer(handle, EP_IN, buf, length, count, timeout);
     /*
     do{
         ret = libusb_bulk_transfer(handle, EP_IN, buf, length, count, timeout);
