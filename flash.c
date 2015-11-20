@@ -193,6 +193,7 @@ int main(int argc, char **argv)
         offset = file_sector_offset * sector_size;
         lseek(fd, offset, SEEK_SET);
         get_file_size(fd, &file_size);
+        file_size -= offset;
         sector_numbers = (file_size - offset + sector_size - 1)/sector_size;
         resp = transmit_file(fd, sector_numbers, sector_size, start_sector, 0);
         if (resp != ACK){
