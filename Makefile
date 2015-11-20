@@ -1,4 +1,4 @@
-CFLAGS = `pkg-config --libs --cflags libusb-1.0`
+CFLAGS = `pkg-config --libs --cflags libusb-1.0` -static -lpthread -lrt
 CC = gcc
 
 sources = firehose.c  firehose.h  generic.h  qdl_usb.c  qdl_usb.h  sahara.c  sahara.h xml_parser.c  xml_parser.h misc.h misc.c
