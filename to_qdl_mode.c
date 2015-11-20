@@ -1,13 +1,34 @@
 #include <libusb.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "generic.h" //xerror
 
-#define VENDOR_ID 0x1bbb
-#define PRODUCT_ID 0xaf02
- 
-
-int main()
+static void usage()
 {
+    info("Usage:");
+    info("  ./to_qdl_mode id_vendor:id_product");
+    info("you could get id_vendor:id_product from lsusb");
+    exit(-1);
+}
+
+int main(int argc, char **argv)
+{
+
+    if(argc != 2){
+        usage();
+    }
+    char *device = argv[1];
+    if(!strchr(device, ':')){
+        usage();
+    }
+
+    u32 id_vendor = 0;
+    u32 id_product = 0;
+    
+    sscanf(device, "%04x:%04x", &id_vendor, &id_product);
+    if(!(id_vendor && id_product)){
+        usage();
+    }
     unsigned char magic[] = {0x3a, 0xa1, 0x6e, 0x7e};
     int nil;
     int r;
@@ -25,13 +46,12 @@ int main()
 
     r = libusb_init(NULL);
     if (r != 0){ 
-        printf("libusb init error");
-        exit(-1);
+        xerror("libusb init error");
     }   
-    handle = libusb_open_device_with_vid_pid(NULL, VENDOR_ID, PRODUCT_ID);
+    handle = libusb_open_device_with_vid_pid(NULL, id_vendor, id_product);
     if (handle == NULL){
-        printf("usb error");
-        exit(-1);
+        libusb_exit(NULL);
+        xerror("usb error");
     }
 
     dev = libusb_get_device(handle); 
