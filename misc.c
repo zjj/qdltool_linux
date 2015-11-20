@@ -19,7 +19,7 @@ void print_stage_info(char *s)
 void usage()
 {
     info("Usage:\n");
-    info("    flash --firehose prog_emmc_firehose_8909_ddr.mbn --rawprogram rawprogram0.xml --patch patch0.xml --dir /tmp/iamges --reboot --format");
+    info("    flash --firehose prog_emmc_firehose_8909_ddr.mbn --rawprogram rawprogram0.xml --patch patch0.xml --imagedir /tmp/iamges --reboot --format");
     info("");
     info("    --reboot is optional");
     info("    --format is optional");

@@ -14,7 +14,7 @@ int main(int argc, char **argv)
         {"firehose",   required_argument,  0,  0 },
         {"patch",    required_argument,  0,  0 },
         {"rawprogram",   required_argument,  0,  0 },
-        {"dir",   required_argument,  0,  0 },
+        {"imagedir",   required_argument,  0,  0 },
         {"reboot",   no_argument,  0,  1},
         {"format",   no_argument,  0,  'f' },
         {0,         0,       0,      0 }
@@ -40,7 +40,7 @@ int main(int argc, char **argv)
                 if(!strcmp(option, "rawprogram")){
                     strcpy(rawprogram, optarg);
                 }
-                if(!strcmp(option, "dir")){
+                if(!strcmp(option, "imagedir")){
                     strcpy(imagedir, optarg);
                 }
                 if(!strcmp(option, "firehose")){
