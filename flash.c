@@ -255,18 +255,16 @@ int main(int argc, char **argv)
         power reset
     */
 
-    if(reboot_flag){
-        print_stage_info("power reset");
-        int loop = 10;
-        while(loop--){
-            resp = power_action("reset");
-            if (resp == ACK){
-                info("power reset ... succeeded");
-                break;
-            }
-            else{
-                xerror("power reset ... failed");
-            }
+    print_stage_info("power...");
+    int loop = 5;
+    while(loop--){
+        resp = power_action(reboot_flag?"reset":"off");
+        if (resp == ACK){
+            info("%s succeeded", reboot_flag?"reboot":"poweroff");
+            break;
+        }
+        if (resp == NAK){
+            xerror("%s failed", reboot_flag?"reboot":"poweroff");
         }
     }
 

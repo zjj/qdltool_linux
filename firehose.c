@@ -476,7 +476,7 @@ response_t power_action(char *act)
 {
     char cmd[128] = {0};
     char *format = "<?xml version=\"1.0\" ?>"
-                   "<data><power value=\"%s\" /></data>";
+                   "<data><power value=\"%s\" delayinseconds=\"2\" /></data>";
     sprintf(cmd, format, act);
     send_command(cmd, strlen(cmd));
     return power_response();
