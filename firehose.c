@@ -151,29 +151,8 @@ response_t transmit_response_xml_reader(xml_reader_t reader)
 }
 
 response_t transmit_response()
-{   
-    int status, r;
-    int timeout = TIMEOUT;
-    char *ptr = respbuf_ref();
-    xml_reader_t reader;
-    response_t response;
-    
-    while(timeout>0){
-        r = 0;
-        status = read_response(ptr, MAX_RESP_LENGTH-(ptr-respbuf), &r);
-        //LOG("%s", respbuf);
-        if(status>=0 && r>0){
-            ptr += r;
-            xmlInitReader(&reader, respbuf, ptr - respbuf);
-            response = transmit_response_xml_reader(reader);
-            if(response != NIL)
-                return response;
-        }else{
-            timeout--;
-            sleep(1);
-        }
-    }
-    return NIL;
+{
+    return _response(transmit_response_xml_reader);
 }
 
 response_t transmit_file_response()
