@@ -9,6 +9,5 @@
 
 extern size_t get_file_size(int fd, size_t *size);
 extern void print_stage_info(char *s);
-extern void usage();
 
 #endif
