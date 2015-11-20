@@ -190,6 +190,7 @@ response_t firehose_configure(size_t *payload)
     char *format = "<?xml version=\"1.0\" ?><data><configure "
                    "MaxPayloadSizeToTargetInBytes=\"%s\" "
                    "verbose=\""FIREHOSE_VERBOSE"\" "
+                   "ZlpAwareHost=\"0\" "
                    "/></data>";
     char MaxPayloadSizeToTargetInBytes[10] = "4096";
     char MaxPayloadSizeToTargetInBytesSupported[10] = {0};
@@ -466,7 +467,7 @@ response_t transmit_file(int fd,
     }
     free(packet);
     packet = NULL;
-    send_data(packet, 0, NULL);//flush function?
+    send_data(NULL, 0, NULL);//flush function?
     response = transmit_file_response();
     if (response == ACK)
         info("  succeeded");
