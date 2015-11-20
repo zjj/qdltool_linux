@@ -19,53 +19,58 @@
 
 #include <stdio.h>
 #include <libusb.h>
-
-static void print_devs(libusb_device **devs)
-{
-	libusb_device *dev;
-	int i = 0, j = 0;
-	uint8_t path[8]; 
-
-	while ((dev = devs[i++]) != NULL) {
-		struct libusb_device_descriptor desc;
-		int r = libusb_get_device_descriptor(dev, &desc);
-		if (r < 0) {
-			fprintf(stderr, "failed to get device descriptor");
-			return;
-		}
-
-		printf("%04x:%04x (bus %d, device %d)",
-			desc.idVendor, desc.idProduct,
-			libusb_get_bus_number(dev), libusb_get_device_address(dev));
-
-		r = libusb_get_port_numbers(dev, path, sizeof(path));
-		if (r > 0) {
-			printf(" path: %d", path[0]);
-			for (j = 1; j < r; j++)
-				printf(".%d", path[j]);
-		}
-		printf("\n");
-
-	}
-}
+#include <stdint.h>
+typedef unsigned short int  uint16_t;
+typedef unsigned char  uint8_t;
 
 int main(void)
 {
-	libusb_device **devs;
-	int r;
-	ssize_t cnt;
-
+	int r, i;
 	r = libusb_init(NULL);
 	if (r < 0)
 		return r;
+    char serial[256] = {0}; 
+    uint16_t    buffer[128] = {0};
+    uint16_t    languages[128] = {0};
+    int languageCount = 0;
+    libusb_device_handle *devh = NULL;
+    devh = libusb_open_device_with_vid_pid(NULL, 0x18d1, 0x4ee2);
+    struct libusb_device_descriptor desc;
+    libusb_device *dev = libusb_get_device(devh);
+    libusb_get_device_descriptor(dev, &desc);
+    libusb_detach_kernel_driver(devh, 0);
+    printf("asdfasdf\n");
+    memset(languages, 0, sizeof(languages));
+    r = libusb_control_transfer(devh, 
+        LIBUSB_ENDPOINT_IN |  LIBUSB_REQUEST_TYPE_STANDARD | LIBUSB_RECIPIENT_DEVICE,
+        LIBUSB_REQUEST_GET_DESCRIPTOR, LIBUSB_DT_STRING << 8, 0, (uint8_t *)languages, sizeof(languages), 0); 
 
-	cnt = libusb_get_device_list(NULL, &devs);
-	if (cnt < 0)
-		return (int) cnt;
+    if (r <= 0) {
+        printf("check_device(): Failed to get languages count\n");
+    }   
+        
+    languageCount = (r - 2) / 2;
+        
+    for (i = 1; i <= languageCount; ++i) {
+        memset(buffer, 0, sizeof(buffer));
 
-	print_devs(devs);
-	libusb_free_device_list(devs, 1);
+        r = libusb_control_transfer(devh, 
+            LIBUSB_ENDPOINT_IN |  LIBUSB_REQUEST_TYPE_STANDARD | LIBUSB_RECIPIENT_DEVICE,
+            LIBUSB_REQUEST_GET_DESCRIPTOR, (LIBUSB_DT_STRING << 8|desc.iSerialNumber), //check this from adb
+    languages[i], (uint8_t *)buffer, sizeof(buffer), 0); 
+        
+        if (r > 0) { /* converting serial */
+            int j = 0;
+            r /= 2;
 
+            for (j = 1; j < r; ++j)
+                serial[j - 1] = buffer[j];
+
+            serial[j - 1] = '\0';
+            break; /* languagesCount cycle */
+        }   
+    }
+    printf("%s\n", serial);
 	libusb_exit(NULL);
 	return 0;
 }
