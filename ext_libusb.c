@@ -94,6 +94,7 @@ libusb_device_handle *get_device_handle_from_serial(char *ser, int len)
                 continue;
             get_device_serial(dev, serial);
             if (!strncmp(ser, serial, len)){
+                libusb_free_device_list(devs, 1);
                 return handle;    
             }
             libusb_close(handle);
