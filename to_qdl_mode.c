@@ -5,7 +5,6 @@
 #include "ext_libusb.h" 
 
 unsigned char magic[] = {0x3a, 0xa1, 0x6e, 0x7e};
-uint16_t _vendors[] = {0x18d1, 0x2717, 0x00};
 
 static void usage()
 {
@@ -15,7 +14,7 @@ static void usage()
     exit(-1);
 }
 
-void try_switch_to_qdl(libusb_device_handle *handle)
+void switch_to_qdl_mode(libusb_device_handle *handle)
 {
     struct libusb_config_descriptor *conf_desc;
     const struct libusb_endpoint_descriptor *endpoint;
@@ -35,6 +34,7 @@ void try_switch_to_qdl(libusb_device_handle *handle)
                     if (r != 0){
                         continue;
                     }
+                    printf("lalalalal\n");
                     // try each endpoint since I dunno which on shall I write magic number into
                     int nil = 0;
                     r = libusb_bulk_transfer(handle,
@@ -74,20 +74,48 @@ int main(int argc, char **argv)
         if(opt == 's'){
             right_option = True;
             strcpy(serial, optarg);
+            libusb_device *dev = NULL;
             libusb_device_handle *handle = NULL;
-            if (serial[0])
-                handle = get_device_handle_from_serial(serial, strlen(serial));
-            if (!handle){
-                printf("no such devices\n");
+            if (serial[0]){
+                dev = get_device_from_serial(serial, strlen(serial));
+                if(!dev){
+                    printf("device not legal, please run -l to check\n");
+                    break;
+                }
+                if (!is_legal_device(dev)){
+                    printf("device not legal, please run -l to check\n");
+                    break;
+                }
+                libusb_open(dev, &handle);
+                if (!handle){
+                    printf("no such devices\n");
+                    break;
+                }
+                switch_to_qdl_mode(handle);
+                libusb_close(handle);
+                libusb_unref_device(dev);
                 break;
             }
-            try_switch_to_qdl(handle);
-            libusb_close(handle);
-            break;
         }
     }
 
-    if(!right_option){
+    if(argc == 1){ //try default
+        libusb_device *candy;
+        int matched = check_devices(devs, &candy);
+        if (matched == 1){
+            libusb_device_handle *handle = NULL;
+            libusb_open(candy, &handle);
+            if (handle)
+                switch_to_qdl_mode(handle);
+            libusb_close(handle);
+        }
+        if (matched == 0)
+            printf("there's no legal device\n");
+        if (matched > 1)
+            printf("I don't know which device to choose, so many devices\n");
+    }
+
+    if(argc > 1 && !right_option){
         usage();
     }
 
