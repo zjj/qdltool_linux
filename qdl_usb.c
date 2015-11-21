@@ -7,6 +7,8 @@
 #define VENDOR_ID 0x05c6
 #define PRODUCT_ID 0x9008
 
+static uint16_t qualcomm_vendors[] = {0x18d1, 0x00};
+
 struct libusb_device_handle *handle;
 
 int qdl_usb_init()
