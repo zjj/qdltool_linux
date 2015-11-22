@@ -1,9 +1,9 @@
 CFLAGS = `pkg-config --libs --cflags libusb-1.0` -lpthread -lrt
-CC = gcc
+CC = gcc -g
 
-flash_sources = firehose.c  firehose.h  generic.h  qdl_usb.c  qdl_usb.h  sahara.c  sahara.h xml_parser.c  xml_parser.h misc.h misc.c
+flash_sources = firehose.c  firehose.h  qdl_usb.c  qdl_usb.h  sahara.c  sahara.h xml_parser.c  xml_parser.h misc.h misc.c
 
-to_qdl_mode_sources = generic.h misc.h misc.c
+to_qdl_mode_sources = misc.h misc.c
 
 all:flash to_qdl_mode
 

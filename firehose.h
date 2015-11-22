@@ -1,6 +1,5 @@
 #ifndef _FIREHOSE_H
 #define _FIREHOSE_H
-#include "generic.h"
 #include "xml_parser.h"
 #include "qdl_usb.h"
 

@@ -34,7 +34,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <ctype.h>
-#include "generic.h"
+#include "misc.h"
 
 typedef enum {
     XML_TOKEN_NONE,

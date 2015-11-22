@@ -61,12 +61,12 @@ response_t common_response_xml_reader(xml_reader_t reader)
 response_t _response(parse_xml_reader_func func)
 {   
     int r, status;
-    int timeout = TIMEOUT;
+    int retry = MAX_RETRY;
     char *ptr = respbuf_ref();
     xml_reader_t reader;
     response_t response;
      
-    while(timeout>0){
+    while(retry>0){
         r = 0;
         status = read_response(ptr, MAX_RESP_LENGTH-(ptr-respbuf), &r);
         if(status>=0 && r>0){
@@ -76,7 +76,7 @@ response_t _response(parse_xml_reader_func func)
             if(response != NIL)
                 return response;
         }else{
-            timeout--;
+            retry--;
             sleep(1);
         }
     }

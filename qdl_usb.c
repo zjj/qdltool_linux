@@ -1,5 +1,4 @@
 #include "qdl_usb.h"
-#include "generic.h"
 #include "misc.h"
 
 #define EP_OUT 0x01

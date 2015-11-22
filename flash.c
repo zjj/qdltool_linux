@@ -3,7 +3,6 @@
 #include <getopt.h>
 #include "sahara.h"
 #include "firehose.h"
-#include "generic.h"
 #include "misc.h"
 
 static void usage()

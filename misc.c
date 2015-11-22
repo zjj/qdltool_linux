@@ -1,5 +1,4 @@
 #include "misc.h"
-#include "generic.h"
 
 size_t get_file_size(int fd, size_t *size)
 {
@@ -198,14 +197,13 @@ int check_devices(libusb_device **devs, libusb_device **candy)
     int d = 0;
     int matched = 0;
     while ((dev = devs[d++]) != NULL) {
-        char serial[256] = {0};
         if(is_legal_device(dev)){
             matched ++;
             *candy = dev;
         }
     }
     if(matched == 1)
-        libusb_ref_device(dev);
+        libusb_ref_device(*candy);
     return matched;
 }
 
@@ -215,13 +213,12 @@ int check_qdl_devices(libusb_device **devs, libusb_device **candy)
     int d = 0;
     int matched = 0;
     while ((dev = devs[d++]) != NULL) {
-        char serial[256] = {0};
         if(is_legal_qdl_device(dev)){
             matched ++;
             *candy = dev;
         }
     }
     if(matched == 1)
-        libusb_ref_device(dev);
+        libusb_ref_device(*candy);
     return matched;
 }
