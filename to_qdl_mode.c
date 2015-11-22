@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "generic.h" //xerror
-#include "ext_libusb.h" 
+#include "misc.h" 
 
 unsigned char magic[] = {0x3a, 0xa1, 0x6e, 0x7e};
 
@@ -77,7 +77,7 @@ int main(int argc, char **argv)
             libusb_device *dev = NULL;
             libusb_device_handle *handle = NULL;
             if (serial[0]){
-                dev = get_device_from_serial(serial, strlen(serial));
+                dev = get_device_from_serial(serial);
                 if(!dev){
                     printf("device not legal, please run -l to check\n");
                     break;
@@ -107,6 +107,7 @@ int main(int argc, char **argv)
             libusb_open(candy, &handle);
             if (handle)
                 switch_to_qdl_mode(handle);
+            libusb_unref_device(candy);
             libusb_close(handle);
         }
         if (matched == 0)

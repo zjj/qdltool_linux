@@ -1,32 +1,100 @@
 #include "qdl_usb.h"
 #include "generic.h"
-#include <sys/ioctl.h>
+#include "misc.h"
 
 #define EP_OUT 0x01
 #define EP_IN  0x81
-#define VENDOR_ID 0x05c6
-#define PRODUCT_ID 0x9008
 
-static uint16_t qualcomm_vendors[] = {0x18d1, 0x00};
+libusb_device_handle *handle = NULL;
 
-struct libusb_device_handle *handle;
-
-int qdl_usb_init()
+int qdl_usb_init(char *serial)
 {
-    int r;
+    libusb_device *dev = NULL;
+    libusb_device **devs;
+    int r, ret;
     r = libusb_init(NULL);
-    if (r != 0){
+    if (r < 0){
         xerror("libusb init error");
-    } 
-    handle = libusb_open_device_with_vid_pid(NULL, VENDOR_ID, PRODUCT_ID);
-    if (handle == NULL){
-        xerror("usb error");
+    }
+    
+    r = libusb_get_device_list(NULL, &devs);
+    if (r < 0){
+        printf("libusb_get_device_list error\n");
+        libusb_exit(NULL);
+        return r;
+    }
+
+    if(serial[0]){
+        dev = get_device_from_serial(serial);
+        if(!dev){
+            printf("device not legal, plese run -l to check\n");
+            return -1;
+        }
+        if(!is_legal_qdl_device(dev)){
+            printf("device not legal, plese run -l to check\n");
+            ret = -1;
+            goto final;
+        }
+    }else{  //for without -s, try to get the default device
+        int matched = check_qdl_devices(devs, &dev);
+        if (matched == 0){
+            printf("there's no legal devie\n");
+            return -1;
+        }
+        if(matched > 1){
+            printf("there's more than one qdl device\n");
+            return -1;
+        }
+    }
+    if(dev == NULL){
+        printf("failed to get dev while qdl_usb_init\n");
+        ret = -1;
+        goto final;
+    }
+    libusb_open(dev, &handle);
+    if(!handle){
+        printf("libusb_open error\n");
+        ret = -1;
+        goto final;
     }
     libusb_detach_kernel_driver(handle, 0); //interface 0
     r = libusb_claim_interface(handle, 0);  //interface 0
     if (r != 0){
-        xerror("usb claim interface error");
+        printf("usb claim interface error");
+        ret = -1;
+        goto final;
     }
+
+final:
+    if(dev)
+        libusb_unref_device(dev);
+    libusb_free_device_list(devs, 1);
+    if(ret < 0){
+        if (handle) 
+            libusb_close(handle);
+        libusb_exit(NULL);
+    }
+    return ret;
+}
+
+void print_all_qdl_devices() //for -l or --list olny
+{
+    libusb_device **devs;
+    int r, ret;
+    r = libusb_init(NULL);
+    if (r < 0){
+        xerror("libusb init error");
+    }
+    
+    r = libusb_get_device_list(NULL, &devs);
+    if (r < 0){
+        printf("libusb_get_device_list error\n");
+        return;
+    }
+
+    print_qdl_devs(devs);
+    libusb_free_device_list(devs, 1);
+    libusb_exit(NULL);
 }
 
 int write_tx(void *buf, int len, int *act)

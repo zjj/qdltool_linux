@@ -14,6 +14,8 @@ static void usage()
     info("    --reboot is optional");
     info("    --format is optional");
     info("    --patch is optional");
+    info("    --list(-l)    list all devices of qdl mode, if you run command with --list, other parameters will be ignored");
+    info("    --device(-s) XXXXXX   flash the specified device, if there's only one device, this is not needed");
     info("eg:");
     info("if you want to flash boot.img and system.img, you need to download them and put them into a direcotry,\n"
          "let's assume the direcotry is named vAJ3, any name you like, and download the rawprogram0.xml.\n"
@@ -47,6 +49,8 @@ int main(int argc, char **argv)
         {"imagedir",   required_argument,  0,  0 },
         {"reboot",   no_argument,  0,  1},
         {"format",   no_argument,  0,  'f' },
+        {"device",   required_argument,  0,  's' },
+        {"list",   required_argument,  0,  'l' },
         {0,         0,       0,      0 }
     };
 
@@ -54,12 +58,13 @@ int main(int argc, char **argv)
     char rawprogram[128] = {0};
     char imagedir[128] = {0};
     char firehose[128] = {0};
+    char serial[128] = {0};
     bool format_flag = False;
     bool reboot_flag = False;
 
     int c;
     int option_index = 0;
-    while((c = getopt_long(argc, argv, "hf", long_options, &option_index)) != -1){
+    while((c = getopt_long(argc, argv, "hfs:l", long_options, &option_index)) != -1){
         switch (c){
             case 0:
                 option = (char *)long_options[option_index].name;
@@ -83,6 +88,13 @@ int main(int argc, char **argv)
             case 1:
                 reboot_flag = True;
                 break;
+            case 's':
+                strcpy(serial, optarg);
+                break;
+            case 'l':
+                print_all_qdl_devices();
+                return;
+                break;
             case 'h':   //help
                 usage();
                 break;
@@ -102,7 +114,10 @@ int main(int argc, char **argv)
     */
     int status;
     print_stage_info("downloadling firehose");
-    qdl_usb_init();
+    status = qdl_usb_init(serial);
+    if (status < 0){
+       xerror("qdl_usb_init error for %s\n", serial); 
+    }
     status = dowload_firehose_image(firehose);
     if (status < 0){
         xerror("dowload_firehose_image failed");
@@ -114,7 +129,7 @@ int main(int argc, char **argv)
     /*
         sahara starts
     */
-    qdl_usb_init();
+    qdl_usb_init(serial);
     size_t payload=0;
     size_t len;
     FILE *fp;
