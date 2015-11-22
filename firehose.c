@@ -3,7 +3,7 @@
 #include "qdl_usb.h"
 #include "sahara.h"
 #include "firehose.h"
-#include "misc.h"
+#include "device.h"
 
 #define send_data write_tx
 

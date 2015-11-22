@@ -1,5 +1,5 @@
-#ifndef __MISC_H_
-#define __MISC_H_
+#ifndef __GLOBAL_H_
+#define __GLOBAL_H_
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -11,6 +11,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <libusb.h>
+#include <getopt.h>
 
 #ifdef DEBUG
 #define LOG(format, ...) fprintf(stdout, "LOG "format"\n", ##__VA_ARGS__)
@@ -34,15 +35,5 @@ typedef enum {
     TRUE=1,
     True=1
 } boolean, bool;
-
-extern size_t get_file_size(int fd, size_t *size);
-extern void print_stage_info(char *s);
-extern bool is_legal_device(libusb_device *dev);
-extern bool is_legal_qdl_device(libusb_device *dev);
-extern int get_device_serial(libusb_device *dev, char *serial);
-extern libusb_device *get_device_from_serial(char *serial);
-extern libusb_device_handle *get_device_handle_from_serial(char *serial);
-extern void print_devs(libusb_device **devs);
-extern void print_qdl_devs(libusb_device **devs);
 
 #endif

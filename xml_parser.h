@@ -28,13 +28,8 @@
 
 #ifndef XML_PARSER_H
 #define XML_PARSER_H
-
-#include <stdio.h>
-#include <stdlib.h>
 #include <stdarg.h>
-#include <string.h>
-#include <ctype.h>
-#include "misc.h"
+#include "global.h"
 
 typedef enum {
     XML_TOKEN_NONE,

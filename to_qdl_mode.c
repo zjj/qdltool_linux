@@ -1,7 +1,7 @@
 #include <libusb.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "misc.h" 
+#include "device.h" 
 
 unsigned char magic[] = {0x3a, 0xa1, 0x6e, 0x7e};
 

@@ -3,7 +3,7 @@
 */
 #ifndef SAHARA_H
 #define SAHARA_H
-#include "misc.h"
+#include "global.h"
 
 #define SAHARA_VERSION_MAJOR 2
 #define SAHARA_VERSION_MAJOR_SUPPORTED 1

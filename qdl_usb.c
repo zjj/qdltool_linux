@@ -1,5 +1,5 @@
 #include "qdl_usb.h"
-#include "misc.h"
+#include "device.h"
 
 #define EP_OUT 0x01
 #define EP_IN  0x81

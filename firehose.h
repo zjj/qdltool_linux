@@ -2,6 +2,7 @@
 #define _FIREHOSE_H
 #include "xml_parser.h"
 #include "qdl_usb.h"
+#include "global.h"
 
 
 typedef enum response_t {
@@ -13,7 +14,6 @@ typedef enum response_t {
 typedef response_t (*parse_xml_reader_func)(xml_reader_t reader);
 
 extern char xml_header[];
-extern size_t get_file_size(int fd, size_t *size);
 extern void parse_program_xml(char *xml,
                                  size_t length,
                                  size_t *offset,

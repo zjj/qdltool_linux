@@ -1,19 +1,4 @@
-#include "misc.h"
-
-size_t get_file_size(int fd, size_t *size)
-{
-    struct stat buf;
-    fstat(fd, &buf);
-    *size = buf.st_size;
-    return buf.st_size;  
-}
-
-void print_stage_info(char *s)
-{
-    printf("----------------------------------------------\n");
-    printf("%s\n", s);
-    printf("----------------------------------------------\n");
-}
+#include "device.h"
 
 bool is_legal_device(libusb_device *dev) //check for switch_to_qdl_mode
 {

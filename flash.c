@@ -1,9 +1,23 @@
 #define _GNU_SOURCE
-#include <strings.h> //strcasecmp
-#include <getopt.h>
 #include "sahara.h"
 #include "firehose.h"
-#include "misc.h"
+#include "device.h"
+#include "global.h"
+
+size_t get_file_size(int fd, size_t *size)
+{
+    struct stat buf;
+    fstat(fd, &buf);
+    *size = buf.st_size;
+    return buf.st_size;
+}
+
+void print_stage_info(char *s)
+{
+    printf("----------------------------------------------\n");
+    printf("%s\n", s); 
+    printf("----------------------------------------------\n");
+}
 
 static void usage()
 {
