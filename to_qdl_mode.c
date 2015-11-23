@@ -62,7 +62,7 @@ int main(int argc, char **argv)
         return r;
 
     int opt;
-    char serial[128] = {0};
+    char serial[256] = {0};
     bool right_option = False;
     while((opt = getopt(argc, argv, "ls:")) != -1){
         if(opt == 'l'){
@@ -112,7 +112,7 @@ int main(int argc, char **argv)
         if (matched == 0)
             printf("there's no legal device\n");
         if (matched > 1)
-            printf("I don't know which device to choose, so many devices\n");
+            printf("I don't know which device to choose, so many devices, please -s XXXXX the specify one\n");
     }
 
     if(argc > 1 && !right_option){

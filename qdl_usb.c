@@ -41,7 +41,7 @@ int qdl_usb_init(char *serial)
             return -1;
         }
         if(matched > 1){
-            printf("there's more than one qdl device\n");
+            printf("there's more than one qdl device, plase add -s XXXXX to specify one\n");
             return -1;
         }
     }
@@ -156,7 +156,7 @@ int read_rx_timeout(void *buf, int length, int *act, int timeout)
 
 int read_rx(void *buf, int length, int *act)
 {
-    return read_rx_timeout(buf, length, act, 1000*10); //10s timeout default
+    return read_rx_timeout(buf, length, act, 1000); //1s timeout default
 }
 
 void qdl_usb_close()
