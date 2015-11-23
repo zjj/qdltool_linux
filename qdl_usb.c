@@ -14,13 +14,15 @@ int qdl_usb_init(char *serial)
     r = libusb_init(NULL);
     if (r < 0){
         xerror("libusb init error");
+        ret = -1;
+        goto final;
     }
     
     r = libusb_get_device_list(NULL, &devs);
     if (r < 0){
         printf("libusb_get_device_list error\n");
-        libusb_exit(NULL);
-        return r;
+        ret = -1;
+        goto final;
     }
 
     if(serial[0]){
@@ -77,26 +79,6 @@ final:
         libusb_exit(NULL);
     }
     return ret;
-}
-
-void print_all_qdl_devices() //for -l or --list olny
-{
-    libusb_device **devs;
-    int r, ret;
-    r = libusb_init(NULL);
-    if (r < 0){
-        xerror("libusb init error");
-    }
-    
-    r = libusb_get_device_list(NULL, &devs);
-    if (r < 0){
-        printf("libusb_get_device_list error\n");
-        return;
-    }
-
-    print_qdl_devs(devs);
-    libusb_free_device_list(devs, 1);
-    libusb_exit(NULL);
 }
 
 int write_tx(void *buf, int len, int *act)

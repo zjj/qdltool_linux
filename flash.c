@@ -130,7 +130,6 @@ int main(int argc, char **argv)
     int status;
     status = qdl_usb_init(serial);
     if (status < 0){
-        qdl_usb_close();
         if(status == -2){
             print_all_qdl_devices();
             return -1;
@@ -196,8 +195,10 @@ int main(int argc, char **argv)
 
             if (resp == ACK)
                 info("formatting %s succeeded ", label);
+            else if (resp == NAK)
+                info("formatting %s failed", label);
             else
-                info("formating %s failed", label);
+                info("formatting %s nil", label);
             free(line);
             line = NULL;
         }

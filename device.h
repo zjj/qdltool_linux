@@ -10,5 +10,6 @@ extern libusb_device *get_device_from_serial(char *serial);
 extern libusb_device_handle *get_device_handle_from_serial(char *serial);
 extern void print_devs(libusb_device **devs);
 extern void print_qdl_devs(libusb_device **devs);
+extern void print_all_qdl_devices();
 
 #endif
