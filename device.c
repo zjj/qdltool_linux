@@ -3,13 +3,12 @@
 bool is_legal_device(libusb_device *dev) //check for switch_to_qdl_mode
 {
     int r;
-    uint16_t vendors[] = {0x18d1, 0x00};
+    uint16_t vendors[] = {0x1bbb, 0x00};
     uint16_t *p = vendors;
     struct libusb_device_descriptor desc;
     r = libusb_get_device_descriptor(dev, &desc);
     if (r)
         return False;
-
     while(*p != 0){
         if(desc.idVendor == *p)
             return True;
@@ -21,16 +20,15 @@ bool is_legal_device(libusb_device *dev) //check for switch_to_qdl_mode
 bool is_legal_qdl_device(libusb_device *dev) //check for 9008
 {
     int r;
-    uint16_t vendors[] = {0x05c6, 0x18d1, 0x00};
-    uint16_t products[] = {0x9008, 0x4ee2, 0x00};
+    uint16_t vendors[] = {0x05c6, 0x00};
+    uint16_t products[] = {0x9008, 0x00};
     uint16_t *v = vendors;
     uint16_t *p = products;
     struct libusb_device_descriptor desc;
     r = libusb_get_device_descriptor(dev, &desc);
     if (r)
         return False;
-
-    while((*v != 0) || (*p != 0)){
+    while((*v != 0) && (*p != 0)){
         if(desc.idVendor == *v && desc.idProduct == *p)
             return True;
         v++;
@@ -42,6 +40,8 @@ bool is_legal_qdl_device(libusb_device *dev) //check for 9008
 int get_device_serial(libusb_device *dev, char *serial)
 {
     int r = 0;
+    char serial1[256] = {0};
+    char serial2[256] = {0};
     uint16_t languages[128] = {0};
     int languageCount = 0;
 
@@ -49,6 +49,21 @@ int get_device_serial(libusb_device *dev, char *serial)
     r = libusb_get_device_descriptor(dev, &desc);
     if (r < 0)
         return r;
+
+    int bus_number = 0;
+    int dev_address = 0;
+    char path[8] = {0};
+
+    bus_number = libusb_get_bus_number(dev);
+    dev_address = libusb_get_device_address(dev);
+
+    r = libusb_get_port_numbers(dev, path, sizeof(path));
+    if (r > 0) {
+        sprintf(serial1, "%04x%04x%d%d%d", desc.idVendor, desc.idProduct, bus_number, dev_address, path[0]);
+    }else{
+        return -1;
+    }
+
     libusb_device_handle *handle = NULL;
     libusb_open(dev, &handle);
     if(handle == NULL){
@@ -79,19 +94,53 @@ int get_device_serial(libusb_device *dev, char *serial)
             int j = 0;
             r /= 2;
             for (j = 1; j < r; ++j)
-                serial[j - 1] = buffer[j];
+                serial2[j - 1] = buffer[j];
 
-            serial[j - 1] = '\0';
+            serial2[j - 1] = '\0';
             break; /* languagesCount cycle */
         }
         if(r<0){
             libusb_close(handle);
+            strcpy(serial, serial1);
             return r;
         }
     }
+    if(serial2[0])
+        strcpy(serial, serial2);
+    else
+        strcpy(serial, serial1);
     libusb_close(handle);
     return 0;
 }
+
+int get_qdl_device_serial(libusb_device *dev, char *serial)
+{
+    int r = 0;
+    uint16_t languages[128] = {0};
+    int languageCount = 0;
+
+    struct libusb_device_descriptor desc;
+
+    r = libusb_get_device_descriptor(dev, &desc);
+    if (r < 0)
+        return r;
+
+    int bus_number = 0;
+    int dev_address = 0;
+    char path[8] = {0};
+
+    bus_number = libusb_get_bus_number(dev);
+    dev_address = libusb_get_device_address(dev);
+
+    r = libusb_get_port_numbers(dev, path, sizeof(path));
+    if (r > 0) {
+        sprintf(serial, "%04x%04x%d%d%d", desc.idVendor, desc.idProduct, bus_number, dev_address, path[0]);
+    }else{
+        return -1;
+    }
+    return 0;
+}
+
 
 libusb_device_handle *get_device_handle_from_serial(char *ser)
 {
