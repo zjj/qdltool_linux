@@ -22,13 +22,14 @@ void print_stage_info(char *s)
 static void usage()
 {
     info("Usage:\n");
-    info("    flash --firehose prog_emmc_firehose_8909_ddr.mbn --rawprogram rawprogram0.xml --patch patch0.xml --imagedir /tmp/iamges --reboot --format");
+    info("    flash --firehose prog_emmc_firehose_8909_ddr.mbn --rawprogram rawprogram0.xml --patch patch0.xml --imagedir /tmp/iamges --reboot --format --device SERIAL_NUMBER");
     info("");
     info("    --reboot is optional");
     info("    --format is optional");
     info("    --patch is optional");
-    info("    --list(-l)    list all devices of qdl mode, if you run command with --list, other parameters will be ignored");
-    info("    --device(-s) XXXXXX   flash the specified device, if there's only one device, this is not needed");
+    info("    --imagedir specify the directory you store the images, this command only flash the images in the imagedir and also in rawprogram0.xml. be careful with the filenames, they shall be the same");
+    info("    --list(-l)    list all devices of qdl mode, if you run command with --list, any other option will be ignored, run flash --list the list all the available devices with qdl mode");
+    info("    --device(-s) <SERIAL_NUMBER>   flash the specified device with serial number, if there's only one device, this is not needed");
     info("eg:");
     info("if you want to flash boot.img and system.img, you need to download them and put them into a direcotry,\n"
          "let's assume the direcotry is named vAJ3, any name you like, and download the rawprogram0.xml.\n"
