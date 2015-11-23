@@ -98,24 +98,27 @@ int main(int argc, char **argv)
     }
 
     if(argc == 1){ //try default
-        libusb_device *candy;
-        matched = check_devices(devs, &candy);
-        if (matched == 1){
-            libusb_device_handle *handle = NULL;
-            libusb_open(candy, &handle);
-            get_device_serial(candy, serial); //for later judege
-            if (handle)
-                switch_to_qdl_mode(handle);
-            libusb_unref_device(candy);
-            libusb_close(handle);
-        }
-        if (matched < 1)
-            info("there's no legal device");
-
-        if (matched > 1){
-            info("I don't know which device to choose, so many devices, please -s XXXXX to specify one from below");
-            print_devs(devs);
-        }
+        do{
+            libusb_device *candy;
+            matched = check_devices(devs, &candy);
+            if (matched == 1){
+                libusb_device_handle *handle = NULL;
+                libusb_open(candy, &handle);
+                if(!handle){
+                    break;
+                }
+                get_device_serial(candy, serial); //for later judege
+                if (handle)
+                    switch_to_qdl_mode(handle);
+                libusb_unref_device(candy);
+                libusb_close(handle);
+            }else if (matched < 1)
+                info("there's no legal device");
+            else { //for matched > 1
+                info("I don't know which device to choose, so many devices, please -s XXXXX to specify one from below");
+                print_devs(devs);
+            }
+        }while(0);
     }
 
     if(argc > 1 && !right_option){
@@ -142,7 +145,7 @@ int main(int argc, char **argv)
             else
                 libusb_unref_device(check_dev);
             libusb_exit(NULL);
-            if(success==0)
+            if(!success)
                 break;
         }
         info("%s", success==0?"success":"failure");
