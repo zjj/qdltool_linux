@@ -10,7 +10,7 @@ int qdl_usb_init(char *serial)
 {
     libusb_device *dev = NULL;
     libusb_device **devs;
-    int r, ret;
+    int  r, ret = 0;
     r = libusb_init(NULL);
     if (r < 0){
         xerror("libusb init error");
@@ -27,7 +27,8 @@ int qdl_usb_init(char *serial)
         dev = get_device_from_serial(serial);
         if(!dev){
             printf("device not legal, plese run -l to check\n");
-            return -1;
+            ret = -1;
+            goto final;
         }
         if(!is_legal_qdl_device(dev)){
             printf("device not legal, plese run -l to check\n");
