@@ -109,10 +109,13 @@ int main(int argc, char **argv)
             libusb_unref_device(candy);
             libusb_close(handle);
         }
-        if (matched == 0)
-            printf("there's no legal device\n");
-        if (matched > 1)
-            printf("I don't know which device to choose, so many devices, please -s XXXXX the specify one\n");
+        if (matched < 1)
+            info("there's no legal device");
+
+        if (matched > 1){
+            info("I don't know which device to choose, so many devices, please -s XXXXX to specify one from below");
+            print_devs(devs);
+        }
     }
 
     if(argc > 1 && !right_option){
