@@ -17,9 +17,9 @@ void switch_to_qdl_mode(libusb_device_handle *handle)
 {
     struct libusb_config_descriptor *conf_desc;
     const struct libusb_endpoint_descriptor *endpoint;
-    struct libusb_interface_descriptor *altsetting;
     libusb_device *dev;
     int i, j, k, r;
+    int nil = 0;
     int interface_numbers = 0;
     dev = libusb_get_device(handle); 
     libusb_get_config_descriptor(dev, 0, &conf_desc);
@@ -34,17 +34,15 @@ void switch_to_qdl_mode(libusb_device_handle *handle)
                         continue;
                     }
                     // try each endpoint since I dunno which on shall I write magic number into
-                    int nil = 0;
                     r = libusb_bulk_transfer(handle,
                                endpoint->bEndpointAddress,
                                magic, sizeof(magic), &nil, 1000);
-                    if(!r)
-                        return;
                     libusb_release_interface(handle, i);
                 }
             }
         }
     }
+    libusb_free_config_descriptor(conf_desc);
 }
 
 int main(int argc, char **argv)
