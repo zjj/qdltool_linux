@@ -448,10 +448,7 @@ response_t transmit_file(int fd,
     packet = NULL;
     send_data(NULL, 0, NULL);//flush function?
     response = transmit_file_response();
-    if (response == ACK)
-        info("  succeeded");
-    else
-        info("failed");
+    response == ACK? info(" succeeded"):info("  failed");
     return response;
 }
 
