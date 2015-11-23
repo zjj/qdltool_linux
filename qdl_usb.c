@@ -9,73 +9,75 @@ libusb_device_handle *handle = NULL;
 int qdl_usb_init(char *serial)
 {
     libusb_device *dev = NULL;
-    libusb_device **devs;
+    libusb_device **devs = NULL;
     int  r, ret = 0;
-    r = libusb_init(NULL);
-    if (r < 0){
-        xerror("libusb init error");
-        ret = -1;
-        goto final;
-    }
-    
-    r = libusb_get_device_list(NULL, &devs);
-    if (r < 0){
-        printf("libusb_get_device_list error\n");
-        ret = -1;
-        goto final;
-    }
-
-    if(serial[0]){
-        dev = get_device_from_serial(serial);
-        if(!dev){
-            printf("device not legal, plese run -l to check\n");
+    do{
+        r = libusb_init(NULL);
+        if (r < 0){
+            xerror("libusb init error");
             ret = -1;
-            goto final;
+            break;
         }
-        if(!is_legal_qdl_device(dev)){
-            printf("device not legal, plese run -l to check\n");
-            ret = -1;
-            goto final;
-        }
-    }else{  //for without -s, try to get the default device
-        int matched = check_qdl_devices(devs, &dev);
-        if (matched == 0){
-            printf("there's no legal devie\n");
-            return -1;
-        }
-        if(matched > 1){
-            printf("there's more than one qdl device, plase add -s XXXXX to specify one\n");
-            return -2;
-        }
-    }
-    if(dev == NULL){
-        printf("failed to get dev while qdl_usb_init\n");
-        ret = -1;
-        goto final;
-    }
-    libusb_open(dev, &handle);
-    if(!handle){
-        printf("libusb_open error\n");
-        ret = -1;
-        goto final;
-    }
-    libusb_detach_kernel_driver(handle, 0); //interface 0
-    r = libusb_claim_interface(handle, 0);  //interface 0
-    if (r != 0){
-        printf("usb claim interface error");
-        ret = -1;
-        goto final;
-    }
 
-final:
-    libusb_free_device_list(devs, 1);
-    if(dev)
-        libusb_unref_device(dev);
+        r = libusb_get_device_list(NULL, &devs);
+        if (r < 0){
+            printf("libusb_get_device_list error\n");
+            ret = -1;
+            break;
+        }
+
+        if(serial[0]){  //for -s
+            dev = get_device_from_serial(serial);
+            if(!dev){
+                printf("device not legal, plese run -l to check\n");
+                ret = -1;
+                break;
+            }
+            if(!is_legal_qdl_device(dev)){
+                printf("device not legal, plese run -l to check\n");
+                ret = -1;
+                break;
+            }
+        }else{  //for without -s, try to get the default device
+            int matched = check_qdl_devices(devs, &dev);
+            if (matched < 1){
+                printf("there's no legal devie\n");
+                ret = -1;
+                break;
+            }
+            if(matched > 1){
+                printf("there's more than one qdl device, plase add -s XXXXX to specify one\n");
+                ret = -2;
+                break;
+            }
+        }
+        if(dev == NULL){
+            printf("failed to get dev while qdl_usb_init\n");
+            ret = -1;
+            break;
+        }
+        libusb_open(dev, &handle);
+        if(!handle){
+            printf("libusb_open error\n");
+            ret = -1;
+            break;
+        }
+        libusb_detach_kernel_driver(handle, 0); //interface 0
+        r = libusb_claim_interface(handle, 0);  //interface 0
+        if (r != 0){
+            printf("usb claim interface error");
+            ret = -1;
+            break;
+        }
+    }while(0);
+
     if(ret < 0){
-        if (handle){
+        if(handle)
             libusb_close(handle);
-            handle = NULL;
-        }
+        if(dev)
+            libusb_unref_device(dev);
+        if(devs)
+            libusb_free_device_list(devs, 1);
         libusb_exit(NULL);
     }
     return ret;
