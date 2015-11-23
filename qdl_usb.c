@@ -91,7 +91,7 @@ int write_tx(void *buf, int len, int *act)
         count = &nil;
     *count = 0;
 
-    ret = libusb_bulk_transfer(handle, EP_OUT, buf, len, count, 1000*10);
+    ret = libusb_bulk_transfer(handle, EP_OUT, buf, len, count, 1000*20);
     return ret;
 /*
     do{
