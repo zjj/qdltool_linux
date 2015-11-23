@@ -33,7 +33,6 @@ void switch_to_qdl_mode(libusb_device_handle *handle)
                     if (r != 0){
                         continue;
                     }
-                    printf("lalalalal\n");
                     // try each endpoint since I dunno which on shall I write magic number into
                     int nil = 0;
                     r = libusb_bulk_transfer(handle,
@@ -62,6 +61,7 @@ int main(int argc, char **argv)
         return r;
 
     int opt;
+    int matched = 0;
     char serial[256] = {0};
     bool right_option = False;
     while((opt = getopt(argc, argv, "ls:")) != -1){
@@ -90,6 +90,7 @@ int main(int argc, char **argv)
                     printf("no such devices\n");
                     break;
                 }
+                matched = 1;
                 switch_to_qdl_mode(handle);
                 libusb_close(handle);
                 libusb_unref_device(dev);
@@ -100,10 +101,11 @@ int main(int argc, char **argv)
 
     if(argc == 1){ //try default
         libusb_device *candy;
-        int matched = check_devices(devs, &candy);
+        matched = check_devices(devs, &candy);
         if (matched == 1){
             libusb_device_handle *handle = NULL;
             libusb_open(candy, &handle);
+            get_device_serial(candy, serial); //for later judege
             if (handle)
                 switch_to_qdl_mode(handle);
             libusb_unref_device(candy);
@@ -124,5 +126,31 @@ int main(int argc, char **argv)
 
     libusb_free_device_list(devs, 1);
     libusb_exit(NULL);
-    return 0;
+    /*
+        if the device with the speicfied usb serial gone, success
+        else if the device's still there, failure
+    */
+    int max_retry = 10;
+    int success = -1;
+    if((argc == 1 || opt == 's') && matched == 1){
+        while(max_retry--){
+            usleep(1000000); //1s delay
+            r = libusb_init(NULL);
+            if(r<0)
+                continue;
+            libusb_device *check_dev = NULL;
+            check_dev = get_device_from_serial(serial);
+            if(!check_dev){ //gone is success
+                success = 0;
+                libusb_exit(NULL);
+                break;
+            }else{
+                libusb_unref_device(check_dev);
+                libusb_exit(NULL);
+            }
+        }
+        info("%s", success==0?"success":"failure");
+        return success;
+    }
+    return -1;
 }
