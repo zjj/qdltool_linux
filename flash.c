@@ -64,7 +64,7 @@ int main(int argc, char **argv)
         {"reboot",   no_argument,  0,  1},
         {"format",   no_argument,  0,  'f' },
         {"device",   required_argument,  0,  's' },
-        {"list",   required_argument,  0,  'l' },
+        {"list",   no_argument,  0,  'l' },
         {0,         0,       0,      0 }
     };
 
@@ -72,7 +72,7 @@ int main(int argc, char **argv)
     char rawprogram[128] = {0};
     char imagedir[128] = {0};
     char firehose[128] = {0};
-    char serial[128] = {0};
+    char serial[256] = {0};
     bool format_flag = False;
     bool reboot_flag = False;
 
