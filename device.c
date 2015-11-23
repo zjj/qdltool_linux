@@ -90,7 +90,7 @@ int get_device_serial(libusb_device *dev, char *serial)
                 LIBUSB_REQUEST_GET_DESCRIPTOR, (LIBUSB_DT_STRING << 8|desc.iSerialNumber),
                 languages[i], (uint8_t *)buffer, sizeof(buffer), 1000);
 
-        if (r > 0) { /* converting serial */
+        if (r >= 0) { /* converting serial */
             int j = 0;
             r /= 2;
             for (j = 1; j < r; ++j)
@@ -99,10 +99,9 @@ int get_device_serial(libusb_device *dev, char *serial)
             serial2[j - 1] = '\0';
             break; /* languagesCount cycle */
         }
-        if(r<0){
-            libusb_close(handle);
-            strcpy(serial, serial1);
-            return r;
+
+        if(r < 0){
+            break;
         }
     }
     if(serial2[0])
@@ -112,35 +111,6 @@ int get_device_serial(libusb_device *dev, char *serial)
     libusb_close(handle);
     return 0;
 }
-
-int get_qdl_device_serial(libusb_device *dev, char *serial)
-{
-    int r = 0;
-    uint16_t languages[128] = {0};
-    int languageCount = 0;
-
-    struct libusb_device_descriptor desc;
-
-    r = libusb_get_device_descriptor(dev, &desc);
-    if (r < 0)
-        return r;
-
-    int bus_number = 0;
-    int dev_address = 0;
-    char path[8] = {0};
-
-    bus_number = libusb_get_bus_number(dev);
-    dev_address = libusb_get_device_address(dev);
-
-    r = libusb_get_port_numbers(dev, path, sizeof(path));
-    if (r > 0) {
-        sprintf(serial, "%04x%04x%d%d%d", desc.idVendor, desc.idProduct, bus_number, dev_address, path[0]);
-    }else{
-        return -1;
-    }
-    return 0;
-}
-
 
 libusb_device_handle *get_device_handle_from_serial(char *ser)
 {

@@ -126,12 +126,19 @@ int main(int argc, char **argv)
     /*
         firehose download
     */
+    //print_stage_info("downloadling firehose");
     int status;
-    print_stage_info("downloadling firehose");
     status = qdl_usb_init(serial);
     if (status < 0){
-       xerror("qdl_usb_init error for %s\n", serial); 
+        qdl_usb_close();
+        if(status == -2){
+            print_all_qdl_devices();
+            return -1;
+        }else{
+            xerror("qdl_usb_init error for %s\n", serial);
+        }
     }
+    print_stage_info("downloadling firehose");
     status = dowload_firehose_image(firehose);
     if (status < 0){
         xerror("dowload_firehose_image failed");

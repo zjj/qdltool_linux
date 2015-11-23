@@ -43,7 +43,7 @@ int qdl_usb_init(char *serial)
         }
         if(matched > 1){
             printf("there's more than one qdl device, plase add -s XXXXX to specify one\n");
-            return -1;
+            return -2;
         }
     }
     if(dev == NULL){
@@ -66,12 +66,14 @@ int qdl_usb_init(char *serial)
     }
 
 final:
+    libusb_free_device_list(devs, 1);
     if(dev)
         libusb_unref_device(dev);
-    libusb_free_device_list(devs, 1);
     if(ret < 0){
-        if (handle) 
+        if (handle){
             libusb_close(handle);
+            handle = NULL;
+        }
         libusb_exit(NULL);
     }
     return ret;
@@ -162,7 +164,10 @@ int read_rx(void *buf, int length, int *act)
 
 void qdl_usb_close()
 {
-    libusb_release_interface(handle, 0);
-    libusb_close(handle);
+    if(handle){
+        libusb_release_interface(handle, 0);
+        libusb_close(handle);
+        handle = NULL;
+    }
     libusb_exit(NULL);
 }
