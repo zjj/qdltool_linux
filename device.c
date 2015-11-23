@@ -112,39 +112,10 @@ int get_device_serial(libusb_device *dev, char *serial)
     return 0;
 }
 
-libusb_device_handle *get_device_handle_from_serial(char *ser)
-{
-    int r;
-    libusb_device *dev;
-    libusb_device **devs;
-    r = libusb_get_device_list(NULL, &devs);
-    if (r < 0)
-        xerror("libusb_get_device_list error");
-
-    int d = 0;
-    libusb_device_handle *handle = NULL;
-    while ((dev = devs[d++]) != NULL) {
-        char serial[256] = {0};
-        handle = NULL;
-        libusb_open(dev, &handle);
-        if(!handle)
-            continue;
-        get_device_serial(dev, serial);
-        if (!strncmp(ser, serial, strlen(ser))){
-            libusb_free_device_list(devs, 1);
-            return handle;
-        }
-        libusb_close(handle);
-    }
-
-    libusb_free_device_list(devs, 1);
-    return NULL;
-}
-
 libusb_device *get_device_from_serial(char *ser)
 {
     int r;
-    libusb_device *dev;
+    libusb_device *dev = NULL;
     libusb_device **devs;
     r = libusb_get_device_list(NULL, &devs);
     if (r < 0){
@@ -154,16 +125,17 @@ libusb_device *get_device_from_serial(char *ser)
     int d = 0;
     while ((dev = devs[d++]) != NULL) {
         char serial[256] = {0};
-        get_device_serial(dev, serial);
+        r = get_device_serial(dev, serial);
+        if(r < 0)
+            continue;
         if (!strncmp(ser, serial, strlen(ser))){
             libusb_ref_device(dev);
-            libusb_free_device_list(devs, 1);
-            return dev;
+            break;
         }
     }
 
     libusb_free_device_list(devs, 1);
-    return NULL;
+    return dev;
 }
 
 
@@ -181,9 +153,24 @@ void print_devs(libusb_device **devs)
     }
 }
 
-void print_qdl_devs(libusb_device **devs)
+void print_qdl_devices() //for -l or --list olny
 {
     libusb_device *dev;
+    libusb_device **devs;
+    int r;
+    r = libusb_init(NULL);
+    if (r < 0){
+        printf("print_qdl_devices libusb_init error\n");
+        return;
+    }
+
+    r = libusb_get_device_list(NULL, &devs);
+    if (r < 0){
+        printf("print_qdl_devices libusb_get_device_list error\n");
+        libusb_exit(NULL);
+        return;
+    }
+
     int d = 0;
     while ((dev = devs[d++]) != NULL) {
         char serial[256] = {0};
@@ -192,24 +179,7 @@ void print_qdl_devs(libusb_device **devs)
                 printf("%s\n", serial);
         }
     }
-}
 
-void print_all_qdl_devices() //for -l or --list olny
-{
-    libusb_device **devs;
-    int r, ret;
-    r = libusb_init(NULL);
-    if (r < 0){
-        xerror("libusb init error");
-    }
-
-    r = libusb_get_device_list(NULL, &devs);
-    if (r < 0){
-        printf("libusb_get_device_list error\n");
-        return;
-    }
-
-    print_qdl_devs(devs);
     libusb_free_device_list(devs, 1);
     libusb_exit(NULL);
 }

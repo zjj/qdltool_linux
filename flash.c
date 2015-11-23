@@ -106,7 +106,7 @@ int main(int argc, char **argv)
                 strcpy(serial, optarg);
                 break;
             case 'l':
-                print_all_qdl_devices();
+                print_qdl_devices();
                 return;
                 break;
             case 'h':   //help
@@ -131,7 +131,7 @@ int main(int argc, char **argv)
     status = qdl_usb_init(serial);
     if (status < 0){
         if(status == -2){
-            print_all_qdl_devices();
+            print_qdl_devices();
             return -1;
         }else{
             xerror("qdl_usb_init error for %s\n", serial);
