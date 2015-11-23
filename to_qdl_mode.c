@@ -136,16 +136,14 @@ int main(int argc, char **argv)
             r = libusb_init(NULL);
             if(r<0)
                 continue;
-            libusb_device *check_dev = NULL;
-            check_dev = get_device_from_serial(serial);
-            if(!check_dev){ //gone is success
+            libusb_device *check_dev = get_device_from_serial(serial);
+            if(!check_dev) //gone is success
                 success = 0;
-                libusb_exit(NULL);
-                break;
-            }else{
+            else
                 libusb_unref_device(check_dev);
-                libusb_exit(NULL);
-            }
+            libusb_exit(NULL);
+            if(success==0)
+                break;
         }
         info("%s", success==0?"success":"failure");
         return success;
