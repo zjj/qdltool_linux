@@ -12,6 +12,8 @@ char rubbish[MAX_LENGTH] = {0};
 
 #define MAX_RESP_LENGTH MAX_LENGTH
 char respbuf[MAX_RESP_LENGTH] = {0};
+
+char bigchunk[MAX_LENGTH*100] = {0}; //100M for tranfer buf
 /*
 use resp_buffer for the response log buffer
 it just returns a ptr to response_xml
@@ -153,14 +155,9 @@ response_t transmit_response_xml_reader(xml_reader_t reader)
     return NIL;
 }
 
-response_t transmit_response()
+response_t transmit_chunk_response()
 {
     return _response(transmit_response_xml_reader);
-}
-
-response_t transmit_file_response()
-{
-    return transmit_response();
 }
 
 response_t firehose_configure(size_t *payload)
@@ -299,37 +296,33 @@ void parse_program_xml(char *xml,
                        size_t *file_sector_offset,
                        size_t *sector_size,
                        size_t *sector_numbers,
-                       char *start_sector,
+                       size_t *start_sector,
                        char *filename)
 {
     char buf[4096] = {0};
-    char tempbuf[128] = {0};
     memcpy(buf, xml, length);
     xml_reader_t reader;
     xml_token_t token;
     xmlInitReader(&reader, buf, length);
 
     while ((token = xmlGetToken(&reader)) != XML_TOKEN_NONE) {
+        char tempbuf[128] = {0};
         if (token == XML_TOKEN_ATTRIBUTE) {
             if (xmlIsAttribute(&reader, "SECTOR_SIZE_IN_BYTES")){
                 xmlGetAttributeValue(&reader, tempbuf, sizeof(tempbuf));
                 *sector_size = atoll(tempbuf);
-                bzero(tempbuf, sizeof(tempbuf));
             }
             if (xmlIsAttribute(&reader, "file_sector_offset")){
                 xmlGetAttributeValue(&reader, tempbuf, sizeof(tempbuf));
                 *file_sector_offset = atoll(tempbuf);
-                bzero(tempbuf, sizeof(tempbuf));
             }
             if (xmlIsAttribute(&reader, "num_partition_sectors")){
                 xmlGetAttributeValue(&reader, tempbuf, sizeof(tempbuf));
                 *sector_numbers = atoll(tempbuf);
-                bzero(tempbuf, sizeof(tempbuf));
             }
             if (xmlIsAttribute(&reader, "start_sector")){
                 xmlGetAttributeValue(&reader, tempbuf, sizeof(tempbuf));
-                strncpy(start_sector, tempbuf, strlen(tempbuf));
-                bzero(tempbuf, sizeof(tempbuf));
+                *start_sector = atoll(tempbuf);
             }
             if (xmlIsAttribute(&reader, "filename")){
                 xmlGetAttributeValue(&reader, filename, 128);
@@ -341,38 +334,34 @@ void parse_program_xml(char *xml,
 void parse_erase_xml(char *xml,
                      size_t length,
                      char *label,
-                     char *start_sector,
+                     size_t *start_sector,
                      size_t *sector_numbers,
-                     char *physical_partition_number)
+                     u8 *physical_partition_number)
 {
     char buf[4096] = {0};
-    char tempbuf[128] = {0};
     memcpy(buf, xml, length);
     xml_reader_t reader;
     xml_token_t token;
     xmlInitReader(&reader, buf, length);
 
     while ((token = xmlGetToken(&reader)) != XML_TOKEN_NONE) {
+        char tempbuf[128] = {0};
         if (token == XML_TOKEN_ATTRIBUTE) {
             if (xmlIsAttribute(&reader, "num_partition_sectors")){
                 xmlGetAttributeValue(&reader, tempbuf, sizeof(tempbuf));
                 *sector_numbers = atoll(tempbuf);
-                bzero(tempbuf, sizeof(tempbuf));
             }
             if (xmlIsAttribute(&reader, "start_sector")){
                 xmlGetAttributeValue(&reader, tempbuf, sizeof(tempbuf));
-                strncpy(start_sector, tempbuf, strlen(tempbuf));
-                bzero(tempbuf, sizeof(tempbuf));
+                *start_sector = atoll(tempbuf);
             }
             if (xmlIsAttribute(&reader, "label")){
                 xmlGetAttributeValue(&reader, tempbuf, sizeof(tempbuf));
                 strncpy(label, tempbuf, strlen(tempbuf));
-                bzero(tempbuf, sizeof(tempbuf));
             }
             if (xmlIsAttribute(&reader, "storagedrive")) {
                 xmlGetAttributeValue(&reader, tempbuf, sizeof(tempbuf));
                 *physical_partition_number = atoll(tempbuf);
-                bzero(tempbuf, sizeof(tempbuf));
             }
         }
     }
@@ -390,7 +379,7 @@ void generate_patch_xml(char *patch, char *line)
 void generate_program_xml(char xml[4096],
                           size_t sector_size,
                           size_t sector_numbers,
-                          char *start_sector,
+                          size_t start_sector,
                           u8 physical_partition_number)
 {
     char buf[1024] = {0};
@@ -398,7 +387,7 @@ void generate_program_xml(char xml[4096],
                     "SECTOR_SIZE_IN_BYTES=\"%zu\" "
                     "num_partition_sectors=\"%zu\" "
                     "physical_partition_number=\"%d\" "
-                    "start_sector=\"%s\" "
+                    "start_sector=\"%zu\" "
                     "/></data>";
     sprintf(buf, template, sector_size, sector_numbers,
                 physical_partition_number, start_sector);
@@ -406,21 +395,22 @@ void generate_program_xml(char xml[4096],
     strncat(xml, buf, strlen(buf));
 }
 
-response_t transmit_file(int fd,
+response_t transmit_chunk(char *chunk,
                    size_t sector_numbers,
                    size_t sector_size,
-                   char *start_sector,
+                   size_t start_sector,
                    u8 physical_partition_number)
 {
     size_t sent;
-    int r, w, status;
-    response_t response;
+    int w, status;
     char program_xml[4096] = {0};
     int payload = 16*1024; //16K
-    char *packet = (char *)malloc(payload);
-    bzero(packet, payload); 
-    clear_rubbish();
+    size_t total_size = sector_size*sector_numbers;
+    char *ptr = chunk;
+    char *end = chunk + total_size;
+    response_t response;
 
+    clear_rubbish();
     generate_program_xml(program_xml,
                          sector_size,
                          sector_numbers,
@@ -429,7 +419,6 @@ response_t transmit_file(int fd,
 
     send_program_xml(program_xml, strlen(program_xml));
     response = program_response();
-
     if (response == NAK)
         xerror("NAK program response");
     if (response == NIL)
@@ -437,36 +426,40 @@ response_t transmit_file(int fd,
 
     sent = w = 0;
     clear_rubbish();
-    while((r=read(fd, packet, payload))>0){
-        status = send_data(packet, ((r + sector_size - 1)/sector_size*sector_size), &w);
-        if((status < 0) || (w != (r + sector_size - 1)/sector_size*sector_size)){
-            xerror("failed, status: %d  w: %d", status, w);
+    while(ptr < end){
+        if(end - ptr < payload){
+            status = send_data(ptr, end-ptr, &w);
+            if((status < 0) || (w != end-ptr)){
+                xerror("failed, status: %d  w: %d", status, w);
+            }
+        }else{
+            status = send_data(ptr, payload, &w);
+            if((status < 0) || (w != payload)){
+                info("failed, status: %d  w: %d", status, w);
+                return NAK;
+            }
         }
-        memset(packet, 0, payload);
         sent += w;
-        printf("\r %zu / %zu    ", sent, sector_numbers*sector_size); fflush (stdout);
+        printf("\r %zu / %zu    ", sent, total_size); fflush (stdout);
 
     }
-    free(packet);
-    packet = NULL;
-    usleep(1000*10);
-    response = transmit_file_response();
+    response = transmit_chunk_response();
     if (response == ACK)
         info("  succeeded");
     else
-        info("failed");
+        info("  failed");
     return response;
 }
 
-response_t partition_erase(char *start_sector,
-                           char sector_numbers,
+response_t partition_erase(size_t start_sector,
+                           size_t sector_numbers,
                            u8 physical_partition_number)
 {
     char cmd[4096] = {0};
     char *format= "<\?xml version=\"1.0\" "
                          "encoding=\"UTF-8\" \?><data>"
                          "<erase "
-                         "start_sector=\"%s\" "
+                         "start_sector=\"%zu\" "
                          "num_partition_sectors=\"%zu\" "
                          "StorageDrive=\"%d\" "
                          "/></data>";

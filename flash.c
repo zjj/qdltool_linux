@@ -173,11 +173,11 @@ int main(int argc, char **argv)
 
         while(getline(&line, &len, fp) != -1){
             char label[128] = {0};
-            char start_sector[128] = {0};
+            size_t start_sector = 0;
             size_t sector_numbers = 0;
-            char *zeroout = NULL;
             u8 physical_partition_number = 0;
 
+            char *zeroout = NULL;
             zeroout = strcasestr(line, "<zeroout"); //fixme
             if (!zeroout){
                 free(line);
@@ -186,7 +186,7 @@ int main(int argc, char **argv)
             }
 
             parse_erase_xml(line, strlen(line), label,
-                            start_sector, &sector_numbers,
+                            &start_sector, &sector_numbers,
                             &physical_partition_number);
 
             resp = partition_erase(start_sector,
@@ -218,15 +218,15 @@ int main(int argc, char **argv)
     }
 
     while(getline(&line, &len, fp) != -1){
+        size_t r = 0;
         char filename[128] = {0};
         char path[256] = {0};
         size_t sector_size;
         size_t file_sector_offset;
         size_t offset;
-        size_t file_size;
         size_t sector_numbers;
+        size_t start_sector;
         char label[128] = {0};
-        char start_sector[128] = {0};
         u8 physical_partition_number;
 
         char *program = NULL;
@@ -238,7 +238,7 @@ int main(int argc, char **argv)
         }
         parse_program_xml(line, strlen(line),
                       &file_sector_offset, &sector_size,
-                      &sector_numbers, start_sector, filename);
+                      &sector_numbers, &start_sector, filename);
 
         if (!filename[0]){
             free(line);
@@ -259,14 +259,17 @@ int main(int argc, char **argv)
         info("programming  %s", filename);
         offset = file_sector_offset * sector_size;
         lseek(fd, offset, SEEK_SET);
-        get_file_size(fd, &file_size);
-        sector_numbers = (file_size - offset + sector_size - 1)/sector_size;
-        resp = transmit_file(fd, sector_numbers, sector_size, start_sector, 0);
-        if (resp != ACK){
-            free(line);
-            close(fd);
-            qdl_usb_close();
-            exit(-1);
+        while((r = read(fd, bigchunk, sizeof(bigchunk))) > 0){
+            sector_numbers = (r + sector_size - 1)/sector_size;
+            start_sector += sector_numbers;
+            resp = transmit_chunk(bigchunk, sector_numbers, sector_size, start_sector, 0);
+            if (resp != ACK){
+                free(line);
+                close(fd);
+                qdl_usb_close();
+                exit(-1);
+            }
+            memset(bigchunk, 0, sizeof(bigchunk));
         }
         free(line);
         line = NULL;
