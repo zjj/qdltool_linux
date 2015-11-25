@@ -25,13 +25,13 @@ char *respbuf_ref()
 static int clear_rubbish()
 {
     bzero(rubbish, sizeof(rubbish));
-    return read_rx_timeout(rubbish, sizeof(rubbish), NULL, 500); //500ms timeout
+    return read_rx_timeout(rubbish, sizeof(rubbish), NULL, 10);
 }
 
 int read_response(void *buf, int length, int *act)
 {
     memset(buf, 0, length);
-    return read_rx_timeout(buf, length, act, 500);
+    return read_rx_timeout(buf, length, act, 10);
 }
 
 int send_command(void *buf, int len)
@@ -69,16 +69,19 @@ response_t _response(parse_xml_reader_func func)
     while(retry>0){
         r = 0;
         status = read_response(ptr, MAX_RESP_LENGTH-(ptr-respbuf), &r);
-        if(status>=0 && r>0){
+        if (status >=0 && r > 0){
             ptr += r;
+            continue;
+        }
+        if(status == LIBUSB_ERROR_TIMEOUT && ptr-respbuf>0){
             xmlInitReader(&reader, respbuf, ptr - respbuf);
             response = func(reader);
             if(response != NIL)
                 return response;
-        }else{
-            retry--;
-            sleep(1);
+            retry --;
+            continue;
         }
+        retry --;
     }
     return NIL;
 }
@@ -446,7 +449,7 @@ response_t transmit_file(int fd,
     }
     free(packet);
     packet = NULL;
-    send_data(NULL, 0, NULL);//flush function?
+    usleep(1000*10);
     response = transmit_file_response();
     if (response == ACK)
         info("  succeeded");

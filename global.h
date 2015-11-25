@@ -23,7 +23,7 @@
 #define info(format, ...) do{fprintf(stdout, format"\n", ##__VA_ARGS__), fflush (stdout);}while(0)
 
 #define MAX_LENGTH (1024*1024) //1M
-#define MAX_RETRY 30
+#define MAX_RETRY 1000
 #define FIREHOSE_VERBOSE "0"
 
 typedef unsigned int u32, uint32;
