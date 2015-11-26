@@ -227,6 +227,7 @@ int main(int argc, char **argv)
         size_t sector_numbers;
         size_t start_sector;
         char label[128] = {0};
+        bool sparse = False;
         u8 physical_partition_number;
 
         char *program = NULL;
@@ -238,7 +239,7 @@ int main(int argc, char **argv)
         }
         parse_program_xml(line, strlen(line),
                       &file_sector_offset, &sector_size,
-                      &sector_numbers, &start_sector, filename);
+                      &sector_numbers, &start_sector, filename, &sparse);
 
         if (!filename[0]){
             free(line);

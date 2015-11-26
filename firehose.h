@@ -21,7 +21,8 @@ extern void parse_program_xml(char *xml,
                                  size_t *sector_size,
                                  size_t *sector_numbers,
                                  size_t *start_sector,
-                                 char *filename);
+                                 char *filename,
+                                 bool *sparse);
 extern response_t program_response();
 extern response_t program_response_xml_reader();
 extern int send_program_xml(char *xml, int length);

@@ -297,7 +297,8 @@ void parse_program_xml(char *xml,
                        size_t *sector_size,
                        size_t *sector_numbers,
                        size_t *start_sector,
-                       char *filename)
+                       char *filename,
+                       bool *sparse)
 {
     char buf[4096] = {0};
     memcpy(buf, xml, length);
@@ -311,21 +312,34 @@ void parse_program_xml(char *xml,
             if (xmlIsAttribute(&reader, "SECTOR_SIZE_IN_BYTES")){
                 xmlGetAttributeValue(&reader, tempbuf, sizeof(tempbuf));
                 *sector_size = atoll(tempbuf);
+                continue;
             }
             if (xmlIsAttribute(&reader, "file_sector_offset")){
                 xmlGetAttributeValue(&reader, tempbuf, sizeof(tempbuf));
                 *file_sector_offset = atoll(tempbuf);
+                continue;
             }
             if (xmlIsAttribute(&reader, "num_partition_sectors")){
                 xmlGetAttributeValue(&reader, tempbuf, sizeof(tempbuf));
                 *sector_numbers = atoll(tempbuf);
+                continue;
             }
             if (xmlIsAttribute(&reader, "start_sector")){
                 xmlGetAttributeValue(&reader, tempbuf, sizeof(tempbuf));
                 *start_sector = atoll(tempbuf);
+                continue;
             }
             if (xmlIsAttribute(&reader, "filename")){
                 xmlGetAttributeValue(&reader, filename, 128);
+                continue;
+            }
+            if (xmlIsAttribute(&reader, "sparse")){
+                xmlGetAttributeValue(&reader, tempbuf, sizeof(tempbuf));
+                if(!strcasecmp(tempbuf, "true"))
+                    *sparse = True;
+                if(!strcasecmp(tempbuf, "false"))
+                    *sparse = False;
+                continue;
             }
         }
     }
