@@ -269,7 +269,7 @@ int main(int argc, char **argv)
                 qdl_usb_close();
                 exit(-1);
             }
-            memset(bigchunk, 0, sizeof(bigchunk));
+            memset(bigchunk, 0, r);
         }
         free(line);
         line = NULL;

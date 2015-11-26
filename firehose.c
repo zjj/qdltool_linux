@@ -401,8 +401,7 @@ response_t transmit_chunk(char *chunk,
                    size_t start_sector,
                    u8 physical_partition_number)
 {
-    size_t sent;
-    int w, status;
+    int w=0, status;
     char program_xml[4096] = {0};
     int payload = 16*1024; //16K
     size_t total_size = sector_size*sector_numbers;
@@ -417,6 +416,7 @@ response_t transmit_chunk(char *chunk,
                          start_sector,
                          physical_partition_number);
 
+    printf("%s\n", program_xml);
     send_program_xml(program_xml, strlen(program_xml));
     response = program_response();
     if (response == NAK)
@@ -424,7 +424,6 @@ response_t transmit_chunk(char *chunk,
     if (response == NIL)
         xerror("no ACK or NAK found in response");
 
-    sent = w = 0;
     clear_rubbish();
     while(ptr < end){
         if(end - ptr < payload){
@@ -439,9 +438,9 @@ response_t transmit_chunk(char *chunk,
                 return NAK;
             }
         }
-        sent += w;
-        printf("\r %zu / %zu    ", sent, total_size); fflush (stdout);
-
+        ptr += w;
+        printf("\r %zu / %zu    ", ptr-chunk, total_size); fflush (stdout);
+        usleep(1000*10);
     }
     response = transmit_chunk_response();
     if (response == ACK)
