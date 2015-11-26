@@ -440,7 +440,6 @@ response_t transmit_chunk(char *chunk,
         }
         ptr += w;
         printf("\r %zu / %zu    ", ptr-chunk, total_size); fflush (stdout);
-        usleep(1000*10);
     }
     response = transmit_chunk_response();
     if (response == ACK)
