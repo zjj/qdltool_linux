@@ -416,7 +416,6 @@ response_t transmit_chunk(char *chunk,
                          start_sector,
                          physical_partition_number);
 
-    printf("%s\n", program_xml);
     send_program_xml(program_xml, strlen(program_xml));
     response = program_response();
     if (response == NAK)
