@@ -1,6 +1,11 @@
 #include "utils.h"
 //from amss
 
+size_t strtoint(char *s) 
+{
+    return strtoull(s, 0, 0); 
+}
+
 static int operatorHigherPrecedenceThan(char left, char right) {
     char operator_string[] = "-+*/";
     char* left_pos = strchr(operator_string, left);

@@ -262,7 +262,6 @@ int main(int argc, char **argv)
         lseek(fd, offset, SEEK_SET);
         while((r = read(fd, bigchunk, sizeof(bigchunk))) > 0){
             sector_numbers = (r + sector_size - 1)/sector_size;
-            start_sector += sector_numbers;
             resp = transmit_chunk(bigchunk, sector_numbers, sector_size, start_sector, 0);
             if (resp != ACK){
                 free(line);
@@ -270,6 +269,7 @@ int main(int argc, char **argv)
                 qdl_usb_close();
                 exit(-1);
             }
+            start_sector += sector_numbers;
             memset(bigchunk, 0, r);
         }
         free(line);

@@ -7,5 +7,6 @@
 #include "global.h"
 
 boolean calc(char* buffer, SIZE_T* result);
+size_t strtoint(char *s);
 
 #endif
