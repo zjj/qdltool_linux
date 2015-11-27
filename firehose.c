@@ -18,8 +18,10 @@ char bigchunk[MAX_LENGTH*100] = {0}; //100M for tranfer buf
 use resp_buffer for the response log buffer
 it just returns a ptr to response_xml
 */
-char *respbuf_ref()
+char *respbuf_ref(size_t *len)
 {
+    if(len)
+        *len = sizeof(respbuf);
     memset(respbuf, 0, sizeof(respbuf));
     return respbuf;
 }
@@ -64,13 +66,14 @@ response_t _response(parse_xml_reader_func func)
 {
     int r, status;
     int retry = MAX_RETRY;
-    char *buf = respbuf_ref();
+    size_t len = 0; 
+    char *buf = respbuf_ref(&len);
     char *ptr = buf;
     response_t response;
 
     while(retry>0){
         r = 0;
-        status = read_response(ptr, MAX_RESP_LENGTH-(ptr-buf), &r);
+        status = read_response(ptr, len-(ptr-buf), &r);
         if (status >=0 && r > 0){
             ptr += r;
         }else{
