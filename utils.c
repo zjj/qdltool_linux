@@ -1,4 +1,4 @@
-#include "qmath.h"
+#include "utils.h"
 //from amss
 
 static int operatorHigherPrecedenceThan(char left, char right) {
@@ -135,11 +135,4 @@ boolean calc(char* buffer, SIZE_T* result) {
     else {
         return FALSE;
     }
-}
-
-int main()
-{
-    int a = 0;
-    calc("(1+10)-2", &a);
-    printf("%d\n", a);
 }

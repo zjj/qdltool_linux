@@ -1,5 +1,5 @@
-#ifndef Q_MATH_H
-#define Q_MATH_H
+#ifndef Q_UTILS_H
+#define Q_UTILS_H
 
 #include <stdio.h>
 #include <stdlib.h>
