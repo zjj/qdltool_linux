@@ -61,27 +61,30 @@ response_t common_response_xml_reader(xml_reader_t reader)
 }
 
 response_t _response(parse_xml_reader_func func)
-{   
+{
     int r, status;
     int retry = MAX_RETRY;
-    char *ptr = respbuf_ref();
-    xml_reader_t reader;
+    char *buf = respbuf_ref();
+    char *ptr = buf;
     response_t response;
-     
+
     while(retry>0){
         r = 0;
-        status = read_response(ptr, MAX_RESP_LENGTH-(ptr-respbuf), &r);
+        status = read_response(ptr, MAX_RESP_LENGTH-(ptr-buf), &r);
         if (status >=0 && r > 0){
             ptr += r;
-            continue;
-        }
-        if(status == LIBUSB_ERROR_TIMEOUT && ptr-respbuf>0){
-            xmlInitReader(&reader, respbuf, ptr - respbuf);
-            response = func(reader);
-            if(response != NIL)
-                return response;
-            retry --;
-            continue;
+        }else{
+            //if(status == LIBUSB_ERROR_TIMEOUT && ptr-respbuf>0){
+            if(ptr>respbuf){
+                xml_reader_t reader;
+                xmlInitReader(&reader, buf, ptr-buf);
+                response = func(reader);
+                if(response != NIL){
+                    return response;
+                }
+                retry --;
+                continue;
+            }
         }
         retry --;
     }
