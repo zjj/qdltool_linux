@@ -498,19 +498,19 @@ response_t configure_response()
 int init_erase(xml_reader_t *reader, firehose_erase_t *e)
 {
     xml_token_t token;
-    while ((token = xmlGetToken(&reader)) != XML_TOKEN_NONE) {
+    while ((token = xmlGetToken(reader)) != XML_TOKEN_NONE) {
         if (token == XML_TOKEN_ATTRIBUTE) {
-            if (xmlIsAttribute(&reader, "num_partition_sectors")){
-                xmlGetAttributeValue(&reader, e->sector_numbers, 128);
+            if (xmlIsAttribute(reader, "num_partition_sectors")){
+                xmlGetAttributeValue(reader, e->sector_numbers, 128);
             }
-            if (xmlIsAttribute(&reader, "start_sector")){
-                xmlGetAttributeValue(&reader, e->start_sector, 128);
+            if (xmlIsAttribute(reader, "start_sector")){
+                xmlGetAttributeValue(reader, e->start_sector, 128);
             }
-            if (xmlIsAttribute(&reader, "label")){
-                xmlGetAttributeValue(&reader, e->label, 128);
+            if (xmlIsAttribute(reader, "label")){
+                xmlGetAttributeValue(reader, e->label, 128);
             }
-            if (xmlIsAttribute(&reader, "storagedrive")) {
-                xmlGetAttributeValue(&reader, e->storagedrive, 128); 
+            if (xmlIsAttribute(reader, "storagedrive")) {
+                xmlGetAttributeValue(reader, e->storagedrive, 128); 
             }
         }
     }
@@ -525,6 +525,60 @@ int init_erase(xml_reader_t *reader, firehose_erase_t *e)
     bzero(e->xml, sizeof(e->xml));
     sprintf(e->xml, format, e->start_sector, e->sector_numbers, e->storagedrive);
 }
+
+int init_program_from_xml_reader(xml_reader_t *reader, program_t *p) //FOR NUM_DISK_SECTORS
+{
+    xml_token_t token;
+    while ((token = xmlGetToken(reader)) != XML_TOKEN_NONE) {
+        if (token == XML_TOKEN_ATTRIBUTE) {
+            if (xmlIsAttribute(reader, "SECTOR_SIZE_IN_BYTES")){
+                xmlGetAttributeValue(reader, p->sector_size_s, 128);
+                p->sector_size = strtoint(p->sector_size_s);
+                continue;
+            }
+            if (xmlIsAttribute(reader, "file_sector_offset")){
+                xmlGetAttributeValue(reader, p->file_sector_offset_s, 128);
+                p->file_sector_offset = strtoint(p->file_sector_offset_s);  
+                continue;
+            }
+            if (xmlIsAttribute(reader, "num_partition_sectors")){
+                xmlGetAttributeValue(reader, p->sector_numbers_s, 128);
+                p->sector_numbers = strtoint(p->sector_numbers_s);
+                continue;
+            }
+            if (xmlIsAttribute(reader, "start_sector")){
+                xmlGetAttributeValue(reader,p->start_sector_s, 128);
+                p->start_sector = strtoint(p->start_sector_s);
+                continue;
+            }
+            if (xmlIsAttribute(reader, "filename")){
+                xmlGetAttributeValue(reader, filename, 256);
+                continue;
+            }
+            if (xmlIsAttribute(reader, "sparse")){
+                xmlGetAttributeValue(reader, p->sparse_s, sizeof(128);
+                if(!strcasecmp(p->sparse_s, "true"))
+                    p->sparse = True;
+                if(!strcasecmp(p->sparse_s, "false"))
+                    p->sparse = False;
+                continue;
+            }
+        }
+    }
+
+    char *template= XML_HEADER
+                    "<data> <program "
+                    "SECTOR_SIZE_IN_BYTES=\"%zu\" "
+                    "num_partition_sectors=\"%zu\" "
+                    "physical_partition_number=\"%zu\" "
+                    "start_sector=\"%s\" "
+                    "/></data>";
+    memset(p->xml, 0, sizeof(p->xml));
+    sprintf(p->xml, template, sector_size, sector_numbers,
+                physical_partition_number, p->start_sector_s);
+}
+
+
 
 void send_erase(firehose_erase_t e);
 {
@@ -554,7 +608,7 @@ size_t strtoint(char *s)
 int init_program(char *xml, int length, program_t *p)
 {
     assert(length<=sizeof(p->xml)); 
- memcpy(p->xml, xml, length);
+    memcpy(p->xml, xml, length);
     xml_reader_t reader;
     xml_token_t token;
     xmlInitReader(&reader, p->xml, length);
@@ -595,6 +649,7 @@ int init_program(char *xml, int length, program_t *p)
             }
         }
     }
+    return 0;
 }
 
 void send_program(program_t p)
@@ -608,25 +663,25 @@ response_t program_response()
     return  _response(program_response_xml_reader);
 }
 
-response_t program_response_xml_reader(xml_reader_t reader)
+response_t program_response_xml_reader(xml_reader_t *reader)
 {
     xml_token_t token;
     char ack[128] = {0};
     char rawmode[128] = {0};
     bool is_response_tag = FALSE;
-    while ((token = xmlGetToken(&reader)) != XML_TOKEN_NONE) {
+    while ((token = xmlGetToken(reader)) != XML_TOKEN_NONE) {
         if(token == XML_TOKEN_TAG){
-            is_response_tag = xmlIsTag(&reader, "response");
+            is_response_tag = xmlIsTag(reader, "response");
             if(is_response_tag){
                 bzero(ack, sizeof(ack));
                 bzero(rawmode, sizeof(rawmode));
             }
         }
         if (token == XML_TOKEN_ATTRIBUTE && is_response_tag) {
-            if (xmlIsAttribute(&reader, "value"))
-                xmlGetAttributeValue(&reader, ack, sizeof(ack));
-            if (xmlIsAttribute(&reader, "rawmode"))
-                xmlGetAttributeValue(&reader, rawmode, sizeof(rawmode));
+            if (xmlIsAttribute(reader, "value"))
+                xmlGetAttributeValue(reader, ack, sizeof(ack));
+            if (xmlIsAttribute(reader, "rawmode"))
+                xmlGetAttributeValue(reader, rawmode, sizeof(rawmode));
             if (ack[0] && rawmode[0]){
                 return (strncasecmp(ack, "ACK", 3)==0
                         && strncasecmp(rawmode, "true", 4)==0)?ACK:NAK;
@@ -634,4 +689,61 @@ response_t program_response_xml_reader(xml_reader_t reader)
         }
     }
     return NIL;
+}
+
+void generate_program_xml(char xml[4096], program_t p)
+{
+    char buf[1024] = {0};
+    char *template= "<data> <program "
+                    "SECTOR_SIZE_IN_BYTES=\"%s\" "
+                    "num_partition_sectors=\"%s\" "
+                    "physical_partition_number=\"%s\" "
+                    "start_sector=\"%s\" "
+                    "/></data>";
+    sprintf(buf, template, sector_size, sector_numbers,
+                physical_partition_number, start_sector);
+    strncpy(xml, xml_header, strlen(xml_header));
+    strncat(xml, buf, strlen(buf));
+}
+
+response_t transmit_chunk(char *chunk, program_t p)
+{
+    int w=0, status;
+    int payload = 16*1024; //16K
+    size_t total_size = p->sector_size*p->sector_numbers;
+    char *ptr = chunk;
+    char *end = chunk + total_size;
+    response_t response;
+
+    clear_rubbish();
+    send_program(p);
+    response = program_response();
+    if (response == NAK)
+        xerror("NAK program response");
+    if (response == NIL)
+        xerror("no ACK or NAK found in response");
+
+    clear_rubbish();
+    while(ptr < end){
+        if(end - ptr < payload){
+            status = send_data(ptr, end-ptr, &w);
+            if((status < 0) || (w != end-ptr)){
+                xerror("failed, status: %d  w: %d", status, w); 
+            }   
+        }else{
+            status = send_data(ptr, payload, &w);
+            if((status < 0) || (w != payload)){
+                info("failed, status: %d  w: %d", status, w); 
+                return NAK;
+            }   
+        }   
+        ptr += w;
+        printf("\r %zu / %zu    ", ptr-chunk, total_size); fflush (stdout);
+    }   
+    response = transmit_chunk_response();
+    if (response == ACK)
+        info("  succeeded");
+    else
+        info("  failed");
+    return response;
 }

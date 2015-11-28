@@ -64,7 +64,7 @@ typedef struct {
     char xml[4096];
 } firehose_power_t;
 
-typedef response_t (*parse_xml_reader_func)(xml_reader_t reader);
+typedef response_t (*parse_xml_reader_func)(xml_reader_t *reader);
 
 extern char bigchunk[MAX_LENGTH*200];
 extern char xml_header[];
