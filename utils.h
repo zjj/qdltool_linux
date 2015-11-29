@@ -1,12 +1,8 @@
-#ifndef Q_UTILS_H
-#define Q_UTILS_H
+#ifndef  _UTILS_H_
+#define  _UTILS_H_
+#include <matcheval.h>
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "global.h"
-
-boolean calc(char* buffer, SIZE_T* result);
-size_t strtoint(char *s);
+extern size_t evaluator(const char *buffer, char *result);
+extern char *strrep( const char *string, const char *substr, const char *replacement); //need free
 
 #endif
