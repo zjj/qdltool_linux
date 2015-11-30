@@ -8,6 +8,7 @@
 extern char respbuf[MAX_RESP_LENGTH];
 extern char rubbish[MAX_LENGTH];
 extern char bigchunk[MAXf_LENGTH*200];
+extern size_t num_disk_sectors;
 
 extern char *respbuf_ref(size_t *len);
 extern int clear_rubbish();

@@ -5,6 +5,7 @@
 char respbuf[MAX_RESP_LENGTH] = {0};
 char rubbish[MAX_LENGTH] = {0};
 char bigchunk[MAX_LENGTH*200] = {0};
+size_t num_disk_sectors = 0;
 
 char *respbuf_ref(size_t *len)
 {
