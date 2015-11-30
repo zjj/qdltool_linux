@@ -57,22 +57,25 @@ static response_t _response(parse_xml_reader_func func)
     while(retry>0){
         r = 0;
         status = read_response(ptr, len-(ptr-buf), &r);
-        if (status >=0 && r > 0){ 
+        if (r > 0){ 
             ptr += r;
-        }else{
+        }
+        if (status < 0){
             if(ptr>respbuf){
                 xml_reader_t reader;
                 xmlInitReader(&reader, buf, ptr-buf);
                 response = func(&reader);
                 if(response != NIL){
                     return response;
-                }   
+                }
                 retry --; 
+                usleep(1000);
                 continue;
-            }   
-        }   
+            }
+        }
         retry --; 
-    }   
+        usleep(1000);
+    }
     return NIL;
 }
 
