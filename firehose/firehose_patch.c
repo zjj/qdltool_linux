@@ -41,5 +41,5 @@ responst_t process_firehose_patch(char *xml, int length)
     xmlInitReader(&reader, xml, length);
     init_firehose_patch(&reader, &patch);
     send_firehose_patch(patch);
-    return firehose_patch_response(); 
+    return firehose_patch_response();
 }
