@@ -1,6 +1,9 @@
 #include "utils.h"
+#include <matcheval.h>
 
-size_t evaluator(const char *buffer, char *result)
+extern size_t NUM_DISK_SECTORS
+
+size_t evaluator(const char *buffer)
 {
     size_t ret = 0;
     void *f = evaluator_create (buffer);
@@ -38,4 +41,24 @@ char *strrep(const char *string, const char *substr, const char *replacement)
     free (oldstr);
   }
   return newstr;
+}
+
+size_t firehose_strtoint(char *s)
+{
+    char buffer[128] = 0;
+    char num_disk_sectors[128] = 0;
+    char *eval;
+    sprintf(num_disk_sectors, "%zu", NUM_DISK_SECTORS);
+
+    eval =  strrep(s, "NUM_DISK_SECTORS", num_disk_sectors);
+    memset(buffer, 0, sizeof(buffer));
+    strcpy(buffer, eval);
+    free(eval);
+    
+    eval = strrep(buffer, ".", "");
+    memset(buffer, 0, sizeof(buffer));
+    strcpy(buffer, eval);  
+    free(eval) 
+
+    return evaluator(buffer);
 }

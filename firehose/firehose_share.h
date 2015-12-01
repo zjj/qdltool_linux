@@ -1,6 +1,6 @@
 #ifndef FIREHOSE_SHARE_H_
 #define FIREHOSE_SHARE_H_
-#include "firehose.h"
+#include "utils.h"
 
 #define MAX_LENGTH (1024*1024) //1M
 #define MAX_RESP_LENGTH (1024*1024)
