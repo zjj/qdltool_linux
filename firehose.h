@@ -3,12 +3,13 @@
 #include "utils.h"
 #include "xml_parser.h"
 #include "qdl_usb.h"
+#include "global.h"
 
 #define send_data write_tx
 
 #define MAX_LENGTH (1024*1024) //1M
 #define MAX_RESP_LENGTH (1024*1024)
-#define XML_HEADER "<\?xml version=\"1.0\" encoding=\"UTF-8\" \?>"
+#define XML_HEADER "<\?xml version=\"1.0\" \?>"
 
 extern char respbuf[MAX_RESP_LENGTH];
 extern char rubbish[MAX_LENGTH];
@@ -26,6 +27,7 @@ typedef struct {
 } firehose_configure_t;
 
 typedef response_t (*parse_xml_reader_func)(xml_reader_t *reader);
+typedef response_t (*get_maxpayload_support_from_xreader_func)(xml_reader_t *reader, char *maxpayload_support, int sz);
 extern response_t process_firehose_configure();
 extern response_t firehose_emmc_info_response_xml_reader(xml_reader_t *reader);
 extern response_t firehose_emmc_info_reponse();
@@ -54,6 +56,7 @@ typedef struct {
 } firehose_patch_t;
 
 extern response_t process_patch(char *xml);
+extern response_t process_firehose_patch_xml(char *, int);
 
 
 typedef struct {

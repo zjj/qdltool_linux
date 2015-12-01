@@ -3,6 +3,7 @@
 #include "firehose.h"
 #include "device.h"
 #include "global.h"
+#include "firehose_flash_image.h"
 
 size_t get_file_size(int fd, size_t *size)
 {
@@ -150,25 +151,19 @@ int main(int argc, char **argv)
         sahara starts
     */
     qdl_usb_init(serial);
-    firehose_emmc_info();
-    printf("%zu\n", NUM_DISK_SECTORS);
-    return 0;
-    process_power_action("poweroff");
-    qdl_usb_close();
+    response_t resp;
 
-#if 0
-    size_t payload=0;
+    resp = firehose_emmc_info();
+    if (resp != ACK)
+        xerror("firehose_emmc_info error");
+
+    resp = process_firehose_configure();
+    if (resp != ACK)
+        xerror("process_firehose_configure error\n");
+
     size_t len;
     FILE *fp;
     char *line= NULL;
-    response_t resp;
-
-    while(!firehose_configure(&payload));
-    if(!payload){
-        xerror("firehose_configure error");
-    }
-    info("set maxpayload size==> %zu", payload);
-
     /*
         formatting
     */
@@ -179,40 +174,20 @@ int main(int argc, char **argv)
             exit(EXIT_FAILURE);
 
         while(getline(&line, &len, fp) != -1){
-            char label[128] = {0};
-            size_t start_sector = 0;
-            size_t sector_numbers = 0;
-            u8 physical_partition_number = 0;
-
-            char *zeroout = NULL;
-            zeroout = strcasestr(line, "<zeroout"); //fixme
-            if (!zeroout){
+            if (!strcasestr(line, "<zeroout")){
                 free(line);
                 line = NULL;
                 continue;
             }
 
-            parse_erase_xml(line, strlen(line), label,
-                            &start_sector, &sector_numbers,
-                            &physical_partition_number);
-
-            resp = partition_erase(start_sector,
-                                   sector_numbers,
-                                   physical_partition_number);
-
-            if (resp == ACK)
-                info("formatting %s succeeded ", label);
-            else if (resp == NAK)
-                info("formatting %s failed", label);
-            else
-                info("formatting %s nil", label);
+            resp = process_firehose_erase_xml(line, strlen(line));
             free(line);
             line = NULL;
         }
-
         fclose(fp);
     };
 
+#if 1
     /*
         rawprogramming
     */
@@ -226,29 +201,20 @@ int main(int argc, char **argv)
 
     while(getline(&line, &len, fp) != -1){
         size_t r = 0;
-        char filename[128] = {0};
+        size_t offset = 0;
         char path[256] = {0};
-        size_t sector_size;
-        size_t file_sector_offset;
-        size_t offset;
-        size_t sector_numbers;
-        size_t start_sector;
-        char label[128] = {0};
-        bool sparse = False;
-        u8 physical_partition_number;
-
-        char *program = NULL;
-        program = strcasestr(line, "<program"); //fixme
-        if (!program){
+        xml_reader_t reader;
+        firehose_program_t program;
+        if (!strcasestr(line, "<program")){
             free(line);
             line = NULL;
             continue;
         }
-        parse_program_xml(line, strlen(line),
-                      &file_sector_offset, &sector_size,
-                      &sector_numbers, &start_sector, filename, &sparse);
 
-        if (!filename[0]){
+        xmlInitReader(&reader, line, strlen(line)); 
+        init_firehose_program_from_xml_reader(&reader, &program);
+
+        if (!program.filename[0]){ //if filename's blank, continue
             free(line);
             line = NULL;
             continue;
@@ -256,7 +222,8 @@ int main(int argc, char **argv)
 
         strncpy(path, imagedir, strlen(imagedir));
         strncat(path, "/", 1);
-        strncat(path, filename, strlen(filename));
+        strncat(path, program.filename, strlen(program.filename));
+        
 
         int fd = open(path, O_RDONLY);
         if(fd<0){   // there's no need to program this partition
@@ -264,33 +231,29 @@ int main(int argc, char **argv)
             line = NULL;
             continue;
         }
-        info("programming  %s", filename);
-        offset = file_sector_offset * sector_size;
+        info("programming  %s", program.filename);
+        offset = program.file_sector_offset * program.sector_size;
         lseek(fd, offset, SEEK_SET);
-        while((r = read(fd, bigchunk, sizeof(bigchunk))) > 0){
-            sector_numbers = (r + sector_size - 1)/sector_size;
-            resp = transmit_chunk(bigchunk, sector_numbers, sector_size, start_sector, 0);
-            if (resp != ACK){
-                free(line);
-                close(fd);
-                qdl_usb_close();
-                exit(-1);
-            }
-            start_sector += sector_numbers;
-            memset(bigchunk, 0, r);
+        if (program.sparse){
+            resp = process_sparse_file(fd, program);
+            if (resp == ACK)
+                info("%s succeed", program.filename);
+        }else{
+            resp = process_general_file(fd, program);
+            if (resp == ACK)
+                info("%s succeed", program.filename);
         }
         free(line);
         line = NULL;
         close(fd);
     }
     fclose(fp);
-
+#endif
     /*
         processing patch0.xml
     */
     if (patch[0]){
         print_stage_info("patching");
-        char pat[4096] = {0};
         fp = fopen(patch, "r");
         if (!fp){
             perror(patch);
@@ -298,37 +261,27 @@ int main(int argc, char **argv)
         }
 
         while(getline(&line, &len, fp) != -1){
-            char *patch_tag = NULL;
-            char what[2048] = {0};
-            char filename[128] = {0};
-
-            patch_tag = strcasestr(line, "<patch"); //fixme
-            if (!patch_tag){
+            if(!strcasestr(line, "<patch")){ //this shall be more common
                 free(line);
                 line = NULL;
                 continue;
             }
 
-            parse_patch_xml(line, len, what, filename);
-            if(strcasecmp(filename, "DISK")){
+            if(!strcasestr(line, "filename=\"DISK\"")){
                 free(line);
                 line = NULL;
                 continue;
             }
 
-            generate_patch_xml(pat, line);
-            send_patch_xml(pat, strlen(pat));
-            resp = patch_response();
-            if (resp != ACK)
-                xerror("failure: %s", what);
-            else
-                info("success: %s", what);
+            resp = process_firehose_patch_xml(line, strlen(line));
+            if (resp != ACK){
+                xerror("process_firehose_patch_xml error");
+            }
             free(line);
             line = NULL;
         };
         fclose(fp);
     }
-
     /*
         power reset
     */
@@ -336,7 +289,7 @@ int main(int argc, char **argv)
     print_stage_info("power...");
     int loop = 5;
     while(loop--){
-        resp = power_action(reboot_flag?"reset":"off");
+        resp = process_power_action(reboot_flag?"reset":"off");
         if (resp == ACK){
             info("%s succeeded", reboot_flag?"reboot":"poweroff");
             break;
@@ -345,9 +298,7 @@ int main(int argc, char **argv)
             xerror("%s failed", reboot_flag?"reboot":"poweroff");
         }
     }
-
     qdl_usb_close();
     print_stage_info("all done:)");
     return 0;
-#endif
 }
