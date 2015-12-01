@@ -1,3 +1,5 @@
+#include "firehose_power.h"
+
 response_t power_response()
 {
     return common_response();
@@ -5,7 +7,7 @@ response_t power_response()
 
 void init_firehose_power(char *act, firehose_power_t *power)
 {
-    memcpy(power->value, act, sizeof(power->value));
+    memcpy(power->act, act, sizeof(power->act));
     char *format = XML_HEADER
                    "<data><power value=\"%s\" "
                    "delayinseconds=\"2\" /></data>";

@@ -144,12 +144,19 @@ int main(int argc, char **argv)
     }
     info("start running firehose\n");
     qdl_usb_close();
-    sleep(2);
+    sleep(3);
 
     /*
         sahara starts
     */
     qdl_usb_init(serial);
+    firehose_emmc_info();
+    printf("%zu\n", NUM_DISK_SECTORS);
+    return 0;
+    process_power_action("poweroff");
+    qdl_usb_close();
+
+#if 0
     size_t payload=0;
     size_t len;
     FILE *fp;
@@ -342,4 +349,5 @@ int main(int argc, char **argv)
     qdl_usb_close();
     print_stage_info("all done:)");
     return 0;
+#endif
 }

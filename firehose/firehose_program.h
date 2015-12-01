@@ -1,5 +1,6 @@
 #ifndef FIREHOSE_PROGRAM_H_
 #define FIREHOSE_PROGRAM_H_
+#include "firehose_share.h"
 
 typedef struct {
     size_t file_sector_offset;

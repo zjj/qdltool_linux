@@ -1,6 +1,6 @@
 #ifndef _FIREHOSE_POWER_H
 #define _FIREHOSE_POWER_H
-#include "firehose.h"
+#include "firehose_share.h"
 
 typedef struct {
     char act[128];

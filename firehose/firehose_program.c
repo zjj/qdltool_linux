@@ -1,8 +1,8 @@
 #include "firehose_program.h"
 
-void update_xml_of_firehose_progarm(firehose_program_t p)
+void update_xml_of_firehose_progarm(firehose_program_t *p)
 {
-    memset(p->xml, 0, sizeof(p->xm;));
+    memset(p->xml, 0, sizeof(p->xml));
     char *template= XML_HEADER
                     "<data> <program "
                     "SECTOR_SIZE_IN_BYTES=\"%zu\" "
@@ -14,7 +14,7 @@ void update_xml_of_firehose_progarm(firehose_program_t p)
                 p->physical_partition_number, p->start_sector);
 }
 
-int init_firehose_program_from_xml_reader(xml_reader_t *reader, program_t *program)
+int init_firehose_program_from_xml_reader(xml_reader_t *reader, firehose_program_t *program)
 {
     xml_token_t token;
     while ((token = xmlGetToken(reader)) != XML_TOKEN_NONE) {
@@ -32,17 +32,17 @@ int init_firehose_program_from_xml_reader(xml_reader_t *reader, program_t *progr
             }
             if (xmlIsAttribute(reader, "num_partition_sectors")){
                 xmlGetAttributeValue(reader, tempbuf, sizeof(tempbuf));
-                program->sector_numbers = firehose_strtoint(tembuf);
+                program->sector_numbers = firehose_strtoint(tempbuf);
                 continue;
             }
             if (xmlIsAttribute(reader, "physical_partition_number")){
                 xmlGetAttributeValue(reader, tempbuf, sizeof(tempbuf));
-                program->physical_partition_number = firehose_strtoint(tembuf);
+                program->physical_partition_number = firehose_strtoint(tempbuf);
                 continue;
             }
             if (xmlIsAttribute(reader, "start_sector")){
                 xmlGetAttributeValue(reader, tempbuf, sizeof(tempbuf));
-                program->start_sector = firehose_strtoint(tembuf);
+                program->start_sector = firehose_strtoint(tempbuf);
                 continue;
             }
             if (xmlIsAttribute(reader, "filename")){
@@ -50,10 +50,10 @@ int init_firehose_program_from_xml_reader(xml_reader_t *reader, program_t *progr
                 continue;
             }
             if (xmlIsAttribute(reader, "sparse")){
-                xmlGetAttributeValue(reader, tempbuf, sizeof(tembuf));
+                xmlGetAttributeValue(reader, tempbuf, sizeof(tempbuf));
                 if(!strcasecmp(tempbuf, "true"))
                     program->sparse = True;
-                if(!strcasecmp(p->tempbuf, "false"))
+                if(!strcasecmp(tempbuf, "false"))
                     program->sparse = False;
                 continue;
             }
@@ -62,7 +62,7 @@ int init_firehose_program_from_xml_reader(xml_reader_t *reader, program_t *progr
     update_xml_of_firehose_progarm(program);
 }
 
-void send_program(program_t p)
+int send_program(firehose_program_t p)
 {
     clear_rubbish();
     return send_command(p.xml, strlen(p.xml));
@@ -134,7 +134,7 @@ response_t transmit_chunk_response()
     return _response(transmit_chunk_response_xml_reader);
 }
 
-response_t transmit_chunk(char *chunk, program_t p)
+response_t transmit_chunk(char *chunk, firehose_program_t p)
 {
     int w=0, status;
     int payload = 16*1024; //16K

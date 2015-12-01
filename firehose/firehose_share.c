@@ -1,5 +1,4 @@
-#ifndef FIREHOSE_SHARE_H
-#define FIREHOSE_SHARE_H
+#include "firehose_share.h"
 
 #define MAX_RESP_LENGTH MAX_LENGTH
 char respbuf[MAX_RESP_LENGTH] = {0};
@@ -76,5 +75,3 @@ size_t strtoint(char *s)
 {
     return strtoull(s, 0, 0);
 }
-
-#endif
