@@ -25,7 +25,6 @@ static response_t _response(parse_xml_reader_func func)
     while(retry>0){
         r = 0;
         status = read_response(ptr, len-(ptr-buf), &r);
-        printf("response %s\n", buf);
         if (r > 0){ 
             ptr += r;
         }
@@ -529,7 +528,6 @@ response_t transmit_chunk(char *chunk, firehose_program_t p)
     size_t to_send = 0;
     response_t response;
     update_xml_of_firehose_progarm(&p); //actually, this shall have been done
-    printf("update_xml_of_firehose_progarm %s", p.xml);
     send_program(p);
     response = program_response();
     if (response == NAK)
