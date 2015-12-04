@@ -1,5 +1,5 @@
 CFLAGS = `pkg-config --libs --cflags libusb-1.0` -lpthread -lrt -ludev -lm
-CC = gcc --static
+CC = gcc -O2 --static
 
 flash_sources = qdl_usb.c  qdl_usb.h  sahara.c  sahara.h xml_parser.c  xml_parser.h device.c device.h firehose.c firehose.h utils.h utils.c firehose_flash_image.c
 
