@@ -1,5 +1,5 @@
-#ifndef __GLOBAL_H_
-#define __GLOBAL_H_
+#ifndef __DEFS_H_
+#define __DEFS_H_
 
 #include <sys/types.h>
 #include <sys/stat.h>

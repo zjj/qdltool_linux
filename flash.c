@@ -2,7 +2,7 @@
 #include "sahara.h"
 #include "firehose.h"
 #include "device.h"
-#include "global.h"
+#include "defs.h"
 #include "firehose_flash_image.h"
 
 size_t get_file_size(int fd, size_t *size)

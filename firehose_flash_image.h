@@ -8,7 +8,7 @@
 #include <unistd.h>
 #include "firehose.h"
 #include "sparse_format.h"
-#include "global.h"
+#include "defs.h"
 #include "utils.h"
 
 response_t process_sparse_file(int fd, firehose_program_t program);

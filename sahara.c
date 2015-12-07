@@ -1,5 +1,4 @@
 #include "sahara.h"
-#include "qdl_usb.h"
 
 void hexdump(void *buf, int length)
 {

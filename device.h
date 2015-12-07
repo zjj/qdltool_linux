@@ -1,7 +1,7 @@
 #ifndef __DEVICE_H_
 #define __DEVICE_H_
 
-#include "global.h"
+#include "defs.h"
 
 extern bool is_legal_device(libusb_device *dev);
 extern bool is_legal_qdl_device(libusb_device *dev);

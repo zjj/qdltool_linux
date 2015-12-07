@@ -1,6 +1,6 @@
 #ifndef QDL_USB_H_
 #define QDL_USB_H_
-#include "global.h"
+#include "defs.h"
 
 extern int qdl_usb_init();
 extern int write_tx(void *buf, int length, int *act);

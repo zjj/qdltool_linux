@@ -3,7 +3,7 @@
 #include "utils.h"
 #include "xml_parser.h"
 #include "qdl_usb.h"
-#include "global.h"
+#include "defs.h"
 
 #define send_data write_tx
 

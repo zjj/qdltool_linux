@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "global.h"
+#include "defs.h"
 
 #define min(a, b) \
     ({ typeof(a) _a = (a); typeof(b) _b = (b); (_a < _b) ? _a : _b; })

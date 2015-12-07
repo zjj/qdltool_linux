@@ -3,7 +3,7 @@ CC = gcc -O2 --static
 
 flash_sources = qdl_usb.c  qdl_usb.h  sahara.c  sahara.h xml_parser.c  xml_parser.h device.c device.h firehose.c firehose.h utils.h utils.c firehose_flash_image.c
 
-to_qdl_mode_sources = global.h device.c device.h
+to_qdl_mode_sources = defs.h device.c device.h
 
 all:flash to_qdl_mode
 
