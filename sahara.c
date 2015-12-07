@@ -146,7 +146,10 @@ int dowload_firehose_image(char *image_path)
         perror("malloc");
         exit(1);
     }
-    read(fd, image_data, file_stat.st_size);
+    int r = read(fd, image_data, file_stat.st_size);
+    if (r < 0){
+        xerror("read %d < 0", r);
+    }
     close(fd);
 
     status = sahara_handle_packet_hello();       //rev hello
