@@ -23,7 +23,7 @@ void print_stage_info(char *s)
 static void usage()
 {
     info("Usage:\n");
-    info("    flash --firehose prog_emmc_firehose_8909_ddr.mbn --rawprogram rawprogram0.xml --patch patch0.xml --imagedir /tmp/iamges --reboot --format --device SERIAL_NUMBER");
+    info("    flash --firehose prog_emmc_firehose_8909_ddr.mbn --rawprogram rawprogram0.xml --patch patch0.xml --imagedir /tmp/iamges --reboot --format --device SERIAL_NUMBER --simlock simlock");
     info("");
     info("    --reboot is optional");
     info("    --format is optional");
@@ -31,6 +31,7 @@ static void usage()
     info("    --imagedir specify the directory you store the images, this command only flash the images in the imagedir and also in rawprogram0.xml. be careful with the filenames, they shall be the same");
     info("    --list(-l)    list all devices of qdl mode, if you run command with --list, any other option will be ignored, run flash --list the list all the available devices with qdl mode");
     info("    --device(-s) <SERIAL_NUMBER>   flash the specified device with serial number, if there's only one device, this is not needed");
+    info("    --simlock simlock or --simlock program");
     info("eg:");
     info("if you want to flash boot.img and system.img, you need to download them and put them into a direcotry,\n"
          "let's assume the direcotry is named vAJ3, any name you like, and download the rawprogram0.xml.\n"
@@ -45,6 +46,8 @@ static void usage()
          "the --format will ask the device to format the partitions described as <zeroout> lines in rawprogram0.xml. if you don't know what you are doing, please don't add this.\n\n"
 
          "the --patch patch0.xml, will patch the gpt (partition table), you shall only need to add this when you flash gpt_main0.bin & gpt_backup0.bin.\n\n"
+
+         "the --simlock specifies the tag to flash simlock partition, --simlock simlock or --simlock program \n\n"
 
          "some images are sparse=\"true\" in rawprogram0.xml, you need convert them to rawimg(non-sparse) with sim2img tool before you run the command\n\n"
 
@@ -62,6 +65,7 @@ int main(int argc, char **argv)
         {"patch",    required_argument,  0,  0 },
         {"rawprogram",   required_argument,  0,  0 },
         {"imagedir",   required_argument,  0,  0 },
+        {"simlock",   required_argument,  0,  0 },
         {"reboot",   no_argument,  0,  1},
         {"format",   no_argument,  0,  'f' },
         {"device",   required_argument,  0,  's' },
@@ -74,6 +78,7 @@ int main(int argc, char **argv)
     char imagedir[128] = {0};
     char firehose[128] = {0};
     char serial[256] = {0};
+    char simlock[256] = {0};
     bool format_flag = False;
     bool reboot_flag = False;
 
@@ -95,6 +100,9 @@ int main(int argc, char **argv)
                 }
                 if(!strcmp(option, "firehose")){
                     strcpy(firehose, optarg);
+                }
+                if(!strcmp(option, "simlock")){
+                    strcpy(simlock, optarg);
                 }
                 break;
             case 'f':
@@ -223,7 +231,6 @@ int main(int argc, char **argv)
         strncpy(path, imagedir, strlen(imagedir));
         strncat(path, "/", 1);
         strncat(path, program.filename, strlen(program.filename));
-        
 
         int fd = open(path, O_RDONLY);
         if(fd<0){   // there's no need to program this partition
@@ -234,14 +241,29 @@ int main(int argc, char **argv)
         info("programming  %s", program.filename);
         offset = program.file_sector_offset * program.sector_size;
         lseek(fd, offset, SEEK_SET);
-        if (program.sparse){
-            resp = process_sparse_file(fd, program);
-            if (resp == ACK)
-                info("%s succeed", program.filename);
-        }else{
-            resp = process_general_file(fd, program);
-            if (resp == ACK)
-                info("%s succeed", program.filename);
+
+        if (!strcasecmp(program.label, "simlock") && !strcasecmp(simlock, "simlock")){
+            //simlock, a little dirty to catch
+            printf("via <simlock>\n");
+            size_t len = 0;
+            firehose_simlock_t slk;
+            get_file_size(fd, &len);
+            slk.len = len; //have to set it here
+            xml_reader_t simlock_reader;
+            xmlInitReader(&simlock_reader, line, strlen(line));
+            init_firehose_simlock_from_xml_reader(&simlock_reader, &slk);
+            resp = process_simlock_file(fd, slk);
+        } else {
+            //program
+            if (program.sparse){
+                resp = process_sparse_file(fd, program);
+                if (resp == ACK)
+                    info("%s succeed", program.filename);
+            }else{
+                resp = process_general_file(fd, program);
+                if (resp == ACK)
+                    info("%s succeed", program.filename);
+            }
         }
         free(line);
         line = NULL;

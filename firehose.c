@@ -397,6 +397,22 @@ void update_xml_of_firehose_progarm(firehose_program_t *p)
                 p->physical_partition_number, p->start_sector);
 }
 
+void update_xml_of_firehose_simlock(firehose_simlock_t *slk)
+{
+    memset(slk->xml, 0, sizeof(slk->xml));
+    char *template= XML_HEADER
+                    "<data> <simlock "
+                    "SECTOR_SIZE_IN_BYTES=\"%zu\" "
+                    "num_partition_sectors=\"%zu\" "
+                    "physical_partition_number=\"%zu\" "
+                    "start_sector=\"%zu\" "
+                    "len=\"%zu\" "
+                    "/></data>";
+
+    sprintf(slk->xml, template, slk->sector_size, slk->sector_numbers,
+                slk->physical_partition_number, slk->start_sector, slk->len);
+}
+
 int init_firehose_program_from_xml_reader(xml_reader_t *reader, firehose_program_t *program)
 {
     xml_token_t token;
@@ -430,6 +446,10 @@ int init_firehose_program_from_xml_reader(xml_reader_t *reader, firehose_program
             }
             if (xmlIsAttribute(reader, "filename")){
                 xmlGetAttributeValue(reader, program->filename, sizeof(program->filename));
+                continue;
+            }
+            if (xmlIsAttribute(reader, "label")){
+                xmlGetAttributeValue(reader, program->label, sizeof(program->label));
                 continue;
             }
             if (xmlIsAttribute(reader, "sparse")){
@@ -572,3 +592,95 @@ int send_command(void *buf, int len)
     return write_tx(buf, len, NULL);
 }
 
+
+int init_firehose_simlock_from_xml_reader(xml_reader_t *reader, firehose_simlock_t *slk)
+{
+    xml_token_t token;
+    while ((token = xmlGetToken(reader)) != XML_TOKEN_NONE) {
+        char tempbuf[256] = {0};
+        if (token == XML_TOKEN_ATTRIBUTE) {
+            if (xmlIsAttribute(reader, "SECTOR_SIZE_IN_BYTES")){
+                xmlGetAttributeValue(reader, tempbuf, sizeof(tempbuf));
+                slk->sector_size = firehose_strtoint(tempbuf);
+                continue;
+            }
+            if (xmlIsAttribute(reader, "file_sector_offset")){
+                xmlGetAttributeValue(reader, tempbuf, sizeof(tempbuf));
+                slk->file_sector_offset = firehose_strtoint(tempbuf);
+                continue;
+            }
+            if (xmlIsAttribute(reader, "num_partition_sectors")){
+                xmlGetAttributeValue(reader, tempbuf, sizeof(tempbuf));
+                slk->sector_numbers = firehose_strtoint(tempbuf);
+                continue;
+            }
+            if (xmlIsAttribute(reader, "physical_partition_number")){
+                xmlGetAttributeValue(reader, tempbuf, sizeof(tempbuf));
+                slk->physical_partition_number = firehose_strtoint(tempbuf);
+                continue;
+            }
+            if (xmlIsAttribute(reader, "start_sector")){
+                xmlGetAttributeValue(reader, tempbuf, sizeof(tempbuf));
+                slk->start_sector = firehose_strtoint(tempbuf);
+                continue;
+            }
+            if (xmlIsAttribute(reader, "filename")){
+                xmlGetAttributeValue(reader, slk->filename, sizeof(slk->filename));
+                continue;
+            }
+            if (xmlIsAttribute(reader, "label")){
+                xmlGetAttributeValue(reader, slk->label, sizeof(slk->label));
+                continue;
+            }
+            if (xmlIsAttribute(reader, "sparse")){
+                xmlGetAttributeValue(reader, tempbuf, sizeof(tempbuf));
+                if(!strcasecmp(tempbuf, "true"))
+                    slk->sparse = True;
+                if(!strcasecmp(tempbuf, "false"))
+                    slk->sparse = False;
+                continue;
+            }
+        }
+    }
+    update_xml_of_firehose_simlock(slk);
+}
+
+int send_simlock(firehose_simlock_t slk)
+{
+    clear_rubbish();
+    return send_command(slk.xml, strlen(slk.xml));
+}
+
+response_t transmit_chunk_simlock(char *chunk, firehose_simlock_t slk)
+{
+    int w=0, status;
+    int payload = 16*1024; //16k 
+    size_t total_size = slk.len;
+    char *ptr = chunk;
+    char *end = chunk + total_size;
+    size_t to_send = 0;
+    response_t response;
+    send_simlock(slk);
+    response = program_response(); //just using program_response here, it's the same
+    if (response == NAK)
+        xerror("NAK simlock response");
+    if (response == NIL)
+        xerror("no ACK or NAK found in simlock response");
+    clear_rubbish();
+    while(ptr < end){
+        to_send = min(end-ptr, payload);
+        status = send_data(ptr, to_send, &w);
+        if ((status < 0) || (w != to_send)){
+            xerror("failed, status: %d  w: %d", status, w);
+        }
+        ptr += w;
+        printf("\r %zu / %zu    ", ptr-chunk, total_size); fflush (stdout);
+    }
+    memset(chunk, 0, total_size);
+    response = transmit_chunk_response();
+    if (response == ACK)
+        info("  succeeded");
+    else
+        info("  failed");
+    return response;
+}

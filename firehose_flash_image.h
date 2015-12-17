@@ -13,5 +13,6 @@
 
 response_t process_sparse_file(int fd, firehose_program_t program);
 response_t process_general_file(int fd, firehose_program_t program);
+response_t process_simlock_file(int fd, firehose_simlock_t slk);
 
 #endif

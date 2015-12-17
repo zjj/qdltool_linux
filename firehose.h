@@ -80,10 +80,26 @@ typedef struct {
     size_t start_sector;
     bool sparse;
     char filename[256];
+    char label[256];
 
     char xml[4096];
 } firehose_program_t;
 
+typedef struct {
+    size_t file_sector_offset;
+    size_t sector_size;
+    size_t sector_numbers;
+    size_t physical_partition_number;
+    size_t start_sector;
+    bool sparse;
+    char filename[256];
+    char label[256];
+    size_t len;
+
+    char xml[4096];
+} firehose_simlock_t;
+
+extern int init_firehose_simlock_from_xml_reader(xml_reader_t *reader, firehose_simlock_t *slk);
 
 extern char *respbuf_ref(size_t *len);
 extern int clear_rubbish();

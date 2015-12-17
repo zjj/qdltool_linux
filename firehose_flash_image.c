@@ -149,3 +149,23 @@ response_t process_general_file(int fd, firehose_program_t program)
     }
     return ACK;
 }
+
+response_t process_simlock_file(int fd, firehose_simlock_t slk)
+{
+    /*
+        we should transmit it in one loop ?
+    */
+    response_t resp;
+    size_t r = 0;
+    while((r = read(fd, bigchunk, sizeof(bigchunk))) > 0){
+        slk.sector_numbers = (r + slk.sector_size - 1)/slk.sector_size;
+        /*the xml will be updated in transmit_chunk*/
+        resp = transmit_chunk_simlock(bigchunk, slk);
+        if (resp != ACK){
+           xerror("transmit_chunk error in process_simlock_file");
+        }
+        slk.start_sector += slk.sector_numbers;
+        memset(bigchunk, 0, r);
+    }
+    return ACK;
+}
