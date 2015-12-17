@@ -31,7 +31,7 @@ static void usage()
     info("    --imagedir specify the directory you store the images, this command only flash the images in the imagedir and also in rawprogram0.xml. be careful with the filenames, they shall be the same");
     info("    --list(-l)    list all devices of qdl mode, if you run command with --list, any other option will be ignored, run flash --list the list all the available devices with qdl mode");
     info("    --device(-s) <SERIAL_NUMBER>   flash the specified device with serial number, if there's only one device, this is not needed");
-    info("    --simlock simlock or --simlock program");
+    info("    --simlock simlock (default) or --simlock program");
     info("eg:");
     info("if you want to flash boot.img and system.img, you need to download them and put them into a direcotry,\n"
          "let's assume the direcotry is named vAJ3, any name you like, and download the rawprogram0.xml.\n"
@@ -47,7 +47,7 @@ static void usage()
 
          "the --patch patch0.xml, will patch the gpt (partition table), you shall only need to add this when you flash gpt_main0.bin & gpt_backup0.bin.\n\n"
 
-         "the --simlock specifies the tag to flash simlock partition, --simlock simlock or --simlock program \n\n"
+         "the --simlock specifies the tag to flash simlock partition, --simlock simlock (default) or --simlock program \n\n"
 
          "some images are sparse=\"true\" in rawprogram0.xml, you need convert them to rawimg(non-sparse) with sim2img tool before you run the command\n\n"
 
@@ -242,7 +242,7 @@ int main(int argc, char **argv)
         offset = program.file_sector_offset * program.sector_size;
         lseek(fd, offset, SEEK_SET);
 
-        if (!strcasecmp(program.label, "simlock") && !strcasecmp(simlock, "simlock")){
+        if (!strcasecmp(program.label, "simlock") && (!strcasecmp(simlock, "simlock") || !strcasecmp(simlock, ""))){
             //simlock, a little dirty to catch
             printf("via <simlock>\n");
             size_t len = 0;
